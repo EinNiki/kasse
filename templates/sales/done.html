@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="narrow pay">
+  <div class="card stack">
+    <span class="label">Gebucht</span>
+    <h2>Verkauf abgeschlossen</h2>
+    <ul class="receipt">
+      {% for l in lines %}<li><span>{{ l.quantity }}× {{ l.name }}</span><span>{{ l.line_total }}</span></li>{% endfor %}
+    </ul>
+    <dl class="sums">
+      <div><dt>Summe</dt><dd>{{ total }}</dd></div>
+      <div><dt>Gegeben</dt><dd>{{ paid }}</dd></div>
+    </dl>
+    <div><span class="muted">Rückgeld</span><div class="big ok">{{ change }}</div></div>
+    <div class="row">
+      <a class="btn" href="/">Startseite</a>
+      <a class="btn primary" href="/buchen">Neue Bestellung</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

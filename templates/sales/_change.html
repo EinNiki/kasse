@@ -1,0 +1,3 @@
+{% if state == "ok" %}<span class="muted">Rückgeld</span><div class="big ok">{{ amount }}</div>
+{% else if state == "short" %}<span class="muted">Es fehlen noch</span><div class="big short">{{ amount }}</div>
+{% else %}<span class="muted">Rückgeld</span><div class="big">–</div>{% endif %}

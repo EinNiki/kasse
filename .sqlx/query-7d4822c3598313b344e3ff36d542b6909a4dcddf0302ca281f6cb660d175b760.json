@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"product_count!\", COUNT(*) FILTER (WHERE stock = 0) AS \"sold_out_count!\"\n           FROM products WHERE active",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "product_count!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "sold_out_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "7d4822c3598313b344e3ff36d542b6909a4dcddf0302ca281f6cb660d175b760"
+}

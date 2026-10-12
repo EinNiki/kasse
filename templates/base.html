@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="htmx-config" content='{"scrollIntoViewOnBoost":false,"allowEval":false,"includeIndicatorStyles":false}'>
+  <meta name="theme-color" content="#ebe7dc">
+  <title>{{ title }} – Kasse</title>
+  <link rel="preload" href="/static/fonts/playfair-display-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/idiomorph-ext.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body hx-ext="morph">
+  {% if let Some(c) = ctx %}
+  <header class="topbar">
+    <a class="brand" href="/">Kasse</a>
+    <span class="grow"></span>
+    <span class="user">{{ c.username }}</span>
+    <form method="post" action="/logout">
+      <input type="hidden" name="csrf_token" value="{{ c.csrf }}">
+      <button type="submit" class="btn">Abmelden</button>
+    </form>
+  </header>
+  {% endif %}
+  {% block content %}{% endblock %}
+</body>
+</html>

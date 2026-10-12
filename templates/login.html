@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth">
+  <aside class="auth-side" aria-hidden="true">
+    <div class="auth-panel">
+      <svg class="auth-art" viewBox="0 0 400 420" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="200" cy="210" r="168" opacity="0.25"/>
+        <circle cx="200" cy="210" r="132" opacity="0.15"/>
+        <!-- beer mug -->
+        <path d="M118 150h96v150a14 14 0 0 1-14 14h-68a14 14 0 0 1-14-14z" fill="currentColor" fill-opacity="0.10"/>
+        <path d="M214 176h22a20 20 0 0 1 20 20v34a20 20 0 0 1-20 20h-22"/>
+        <path d="M118 150c-6-14 4-26 18-24 4-14 24-18 32-6 12-8 30 0 28 14 12 0 20 10 18 16"/>
+        <path d="M144 190v96M168 190v96M192 190v96" opacity="0.4"/>
+        <!-- bottle -->
+        <path d="M296 118h22v38l12 22v128a10 10 0 0 1-10 10h-26a10 10 0 0 1-10-10V178l12-22z" fill="currentColor" fill-opacity="0.10"/>
+        <path d="M296 118h22M290 214h40M290 262h40" opacity="0.6"/>
+        <!-- wine glass -->
+        <path d="M72 120h56c0 38-10 62-28 62s-28-24-28-62z" fill="currentColor" fill-opacity="0.10" transform="translate(0 96) scale(0.9)"/>
+        <path d="M100 262v54M80 318h40" transform="translate(0 6)"/>
+        <!-- sparkles -->
+        <path d="M150 84v18M141 93h18M262 70v14M255 77h14" opacity="0.7"/>
+      </svg>
+      <div class="auth-copy">
+        <span class="label on-dark">Theke &amp; Lager</span>
+        <h1>Alles im <span class="em">Griff</span>, Bestellung für Bestellung.</h1>
+        <p>Buchen, Bestand und Umsatz an einem ruhigen Ort.</p>
+      </div>
+    </div>
+  </aside>
+  <main class="auth-form">
+    <div class="auth-box">
+      <span class="auth-brand">Kasse</span>
+      <div class="card">
+        <h2>Willkommen zurück</h2>
+        <p class="muted auth-hint">Kurz anmelden, dann kann gebucht werden.</p>
+        {% if let Some(e) = error %}
+        <p class="notice error" role="alert">{{ e }}</p>
+        {% endif %}
+        <form method="post" action="/login" class="stack">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <label>Benutzername
+            <input type="text" name="username" autocomplete="username" autocapitalize="none" required autofocus>
+          </label>
+          <label>Passwort
+            <input type="password" name="password" autocomplete="current-password" required>
+          </label>
+          <button type="submit" class="btn primary">Anmelden</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

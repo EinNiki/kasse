@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="wide">
+  <div class="page-head"><h2>Lager</h2></div>
+  {% include "stock/_nav.html" %}
+  <div id="lager-body">
+  {% if let Some(n) = notice %}<p class="notice ok" role="status">{{ n }}</p>{% endif %}
+  <form method="get" action="/lager" class="filters hide-labels-sm lager-filters" role="search"
+        hx-get="/lager" hx-trigger="input changed, change, submit" hx-sync="this:replace"
+        hx-target="#results" hx-select="#results" hx-swap="morph:outerHTML" hx-replace-url="true">
+    <label class="grow">Suche
+      <input type="search" name="q" value="{{ q }}" placeholder="Produktname" autocomplete="off" enterkeyhint="search">
+    </label>
+    <label>Kategorie
+      <select name="kategorie">
+        <option value="">Alle</option>
+        {% for c in categories %}<option value="{{ c.id }}" {% if c.selected %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <noscript><button type="submit" class="btn">Filtern</button></noscript>
+    <a class="btn primary" href="/lager/produkte/neu">Neues Produkt</a>
+  </form>
+  <div class="table-wrap" id="results">
+    <table class="responsive compact">
+      <thead><tr><th>Name</th><th>Kategorie</th><th class="num">Bestand</th><th class="num">Preis</th><th class="actions">Aktionen</th></tr></thead>
+      <tbody>
+        {% for p in products %}
+        <tr id="p-{{ p.id }}">
+          <td data-label="Name">{{ p.name }}</td>
+          <td data-label="Kategorie" class="muted">{{ p.category }}</td>
+          <td data-label="Bestand" class="num">{% if p.stock == 0 %}<span class="badge warn">0</span>{% else %}{{ p.stock }}{% endif %}</td>
+          <td data-label="Preis" class="num">{{ p.price }}</td>
+          <td data-label="Aktionen" class="actions">
+            <a class="btn small" href="/lager/produkte/{{ p.id }}/bestand">Bestand</a>
+            <a class="btn small" href="/lager/produkte/{{ p.id }}/bearbeiten">Bearbeiten</a>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if products.is_empty() %}<tr><td colspan="5" class="muted">Keine Produkte gefunden.</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+  </div>
+</main>
+{% endblock %}

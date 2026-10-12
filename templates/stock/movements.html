@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="wide">
+  <div class="page-head"><h2>Lager</h2></div>
+  {% include "stock/_nav.html" %}
+  <div id="lager-body">
+  <div class="table-wrap">
+    <table class="responsive">
+      <thead><tr><th>Zeit</th><th>Produkt</th><th class="num">Menge</th><th>Grund</th><th>Kommentar</th><th>Benutzer</th></tr></thead>
+      <tbody>
+        {% for m in movements %}
+        <tr>
+          <td data-label="Zeit" class="muted">{{ m.time }}</td>
+          <td data-label="Produkt">{{ m.product }}</td>
+          <td data-label="Menge" class="num"><span class="{% if m.positive %}pos{% else %}neg{% endif %}">{{ m.delta }}</span></td>
+          <td data-label="Grund">{{ m.reason }}</td>
+          <td data-label="Kommentar" class="muted">{{ m.comment }}</td>
+          <td data-label="Benutzer" class="muted">{{ m.user }}</td>
+        </tr>
+        {% endfor %}
+        {% if movements.is_empty() %}<tr><td colspan="6" class="muted">Noch keine Bewegungen.</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="shop" id="shop"
+     hx-boost="true" hx-target="#shop" hx-select="#shop" hx-swap="morph:outerHTML"
+     hx-push-url="false" hx-sync="#shop:queue all">
+  <section class="shop-main" aria-label="Produkte">
+    <div class="shop-tools">
+    <form method="get" action="{{ search_action }}" class="shop-search" role="search"
+          hx-get="{{ search_action }}" hx-trigger="input changed, submit" hx-sync="this:replace" hx-replace-url="true">
+      <input type="search" name="q" value="{{ q }}" placeholder="Produkt suchen" autocomplete="off" enterkeyhint="search" aria-label="Produkt suchen">
+      <noscript><button type="submit" class="btn">Suchen</button></noscript>
+    </form>
+    <nav class="chips" aria-label="Kategorien">
+      {% for c in chips %}<a class="chip {% if c.active %}active{% endif %}" href="{{ c.href }}" hx-push-url="true" {% if c.active %}aria-current="page"{% endif %}>{{ c.name }}</a>{% endfor %}
+    </nav>
+    </div>
+    <div class="products" id="products">
+      {% for t in tiles %}
+      <form method="post" action="/buchen/warenkorb/{{ t.id }}/add" id="p-{{ t.id }}">
+        {% include "_csrf.html" %}
+        <input type="hidden" name="back" value="{{ back }}">
+        <button type="submit" class="product" {% if t.disabled %}disabled{% endif %}>
+          <span class="product-name">{{ t.name }}</span>
+          <span class="product-meta">
+            <span class="price">{{ t.price }}</span>
+            {% if t.stock == 0 %}<span class="badge warn">Ausverkauft</span>
+            {% else if t.disabled %}<span class="badge">Alle im Warenkorb</span>
+            {% else if t.low %}<span class="badge">noch {{ t.stock }}</span>{% endif %}
+          </span>
+        </button>
+      </form>
+      {% endfor %}
+      {% if tiles.is_empty() %}<p class="muted">Keine Produkte gefunden.</p>{% endif %}
+    </div>
+  </section>
+
+  <aside class="cart" id="cart" aria-label="Warenkorb">
+    <h2>Warenkorb</h2>
+    {% if cart.is_empty() %}
+    <p class="muted cart-empty">Noch nichts im Warenkorb. Tippe ein Produkt an.</p>
+    {% else %}
+    <ul class="cart-lines">
+      {% for l in cart %}
+      <li id="c-{{ l.id }}">
+        <div class="cart-name">{{ l.name }}<span class="muted">{{ l.unit_price }} je Stück</span></div>
+        <div class="cart-qty">
+          <form method="post" action="/buchen/warenkorb/{{ l.id }}/minus">
+            {% include "_csrf.html" %}<input type="hidden" name="back" value="{{ back }}">
+            <button type="submit" class="qty" aria-label="Eine Einheit weniger: {{ l.name }}">−</button>
+          </form>
+          <span class="qty-value">{{ l.quantity }}</span>
+          <form method="post" action="/buchen/warenkorb/{{ l.id }}/plus">
+            {% include "_csrf.html" %}<input type="hidden" name="back" value="{{ back }}">
+            <button type="submit" class="qty" aria-label="Eine Einheit mehr: {{ l.name }}" {% if !l.can_plus %}disabled{% endif %}>+</button>
+          </form>
+        </div>
+        <div class="cart-sum">{{ l.line_total }}</div>
+        <form method="post" action="/buchen/warenkorb/{{ l.id }}/remove" class="cart-remove">
+          {% include "_csrf.html" %}<input type="hidden" name="back" value="{{ back }}">
+          <button type="submit" class="link-btn">Entfernen</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="cart-total"><span>Gesamt</span><strong>{{ total }}</strong></div>
+    {% if !cart.is_empty() %}
+    <div class="cart-bar">
+      <a class="cart-bar-sum" href="#cart" hx-boost="false">{{ cart.len() }} Pos. · <strong>{{ total }}</strong></a>
+      <a class="btn primary" href="/buchen/abbuchen" hx-boost="false">Abbuchen</a>
+    </div>
+    {% endif %}
+    {% if cart.is_empty() %}
+    <button type="button" class="btn primary" disabled>Abbuchen</button>
+    {% else %}
+    <a class="btn primary" href="/buchen/abbuchen" hx-boost="false">Abbuchen</a>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

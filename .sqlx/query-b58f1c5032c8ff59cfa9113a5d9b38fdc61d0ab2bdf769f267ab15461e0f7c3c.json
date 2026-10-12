@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.id, c.name, COUNT(p.id) AS \"product_count!\"\n           FROM categories c LEFT JOIN products p ON p.category_id = c.id AND p.active\n           WHERE c.id = $1 GROUP BY c.id, c.name",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "product_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "b58f1c5032c8ff59cfa9113a5d9b38fdc61d0ab2bdf769f267ab15461e0f7c3c"
+}

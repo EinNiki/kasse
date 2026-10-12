@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COALESCE(SUM(total_cents), 0)::bigint AS \"revenue_cents!\", COUNT(*) AS \"sales_count!\"\n           FROM sales\n           WHERE created_at >= (date_trunc('day', now() AT TIME ZONE 'Europe/Berlin') AT TIME ZONE 'Europe/Berlin')",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "revenue_cents!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "sales_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "98d8973551371f1ee486ea9a460ae8ca9daf691196aace236349f9d2a672b5ad"
+}

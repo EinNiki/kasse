@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="narrow">
+  <div class="card stack">
+    <h2>{{ heading }}</h2>
+    <p>{{ text }}</p>
+    <form method="post" action="{{ action }}" class="row">
+      {% include "_csrf.html" %}
+      <a class="btn" href="{{ back }}">Abbrechen</a>
+      {% if can_delete %}<button type="submit" class="btn danger">Löschen</button>{% endif %}
+    </form>
+  </div>
+</main>
+{% endblock %}

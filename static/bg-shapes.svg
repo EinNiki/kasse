@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <g fill="#8c9a84">
+    <circle cx="90" cy="40" r="260" fill-opacity="0.12"/>
+    <path d="M820 820V560a190 190 0 0 1 380 0V820Z" fill-opacity="0.12"/>
+  </g>
+  <g fill="none" stroke="#8c9a84" stroke-opacity="0.35" stroke-width="1.5">
+    <circle cx="90" cy="40" r="340"/>
+    <path d="M770 820V560a240 240 0 0 1 480 0V820"/>
+  </g>
+</svg>

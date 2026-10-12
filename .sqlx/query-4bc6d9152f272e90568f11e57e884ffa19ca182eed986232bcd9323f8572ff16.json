@@ -1,0 +1,55 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT p.id, p.category_id, c.name AS \"category_name?\", p.name, p.price_cents, p.stock\n           FROM products p LEFT JOIN categories c ON c.id = p.category_id\n           WHERE p.active AND p.name ILIKE $1 ESCAPE '\\' AND ($2::bigint IS NULL OR p.category_id = $2)\n           ORDER BY CASE WHEN p.name ILIKE $3 ESCAPE '\\' THEN 0\n                         WHEN p.name ILIKE $4 ESCAPE '\\' THEN 1\n                         ELSE 2 END,\n                    c.sort_order NULLS LAST, p.name",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "category_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "category_name?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "price_cents",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "stock",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4bc6d9152f272e90568f11e57e884ffa19ca182eed986232bcd9323f8572ff16"
+}

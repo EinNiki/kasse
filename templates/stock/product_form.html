@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="narrow">
+  <div class="card">
+    <h2>{{ heading }}</h2>
+    {% if let Some(e) = error %}<p class="notice error" role="alert">{{ e }}</p>{% endif %}
+    <form method="post" action="{{ action }}" class="stack">
+      {% include "_csrf.html" %}
+      <label>Name
+        <input type="text" name="name" value="{{ name }}" maxlength="100" required autofocus>
+      </label>
+      <label>Kategorie
+        <select name="category_id" required>
+          {% for c in categories %}<option value="{{ c.id }}" {% if c.selected %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Preis in Euro
+        <input type="text" name="price" value="{{ price }}" inputmode="decimal" placeholder="z. B. 2,50" required>
+      </label>
+      <div class="row">
+        <a class="btn" href="/lager">Abbrechen</a>
+        <button type="submit" class="btn primary">Speichern</button>
+      </div>
+    </form>
+    {% if let Some(url) = delete_url %}
+    <p class="danger-zone"><a href="{{ url }}">Produkt löschen …</a></p>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

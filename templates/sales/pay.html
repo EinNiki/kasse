@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="narrow pay">
+  <div class="card stack" id="pay"
+       hx-target="#pay" hx-select="#pay" hx-swap="morph:outerHTML" hx-replace-url="true" hx-sync="this:replace">
+    <span class="label">Abbuchen</span>
+    <div><span class="muted">Summe</span><div class="big">{{ total }}</div></div>
+    {% if let Some(e) = error %}<p class="notice error" role="alert">{{ e }}</p>{% endif %}
+    <form method="post" action="/buchen/abbuchen" class="stack">
+      {% include "_csrf.html" %}
+      <label>Gegeben
+        <input type="text" name="gegeben" id="{{ input_id }}" value="{{ given }}" inputmode="decimal" autocomplete="off" required autofocus
+               placeholder="z. B. 10 oder 7,50"
+               hx-get="/buchen/abbuchen" hx-trigger="input changed">
+      </label>
+      <div class="quick">
+        {% for q in quick %}<a class="btn" href="{{ q.1 }}" hx-get="{{ q.1 }}">{{ q.0 }}</a>{% endfor %}
+      </div>
+      <div id="change" class="change" aria-live="polite">{{ change_html|safe }}</div>
+      <div class="row">
+        <a class="btn" href="/buchen/alle">Zurück zum Warenkorb</a>
+        <button type="submit" class="btn primary">Abbuchen</button>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, total_cents, paid_cents, change_cents FROM sales WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "total_cents",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "paid_cents",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "change_cents",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "818847a7aa0a471e919dfd9b1452661e8b52b05b3e66a2d07e89075f06af64a4"
+}

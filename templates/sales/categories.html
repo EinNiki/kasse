@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="wide">
+  <div class="page-head"><h2>Buchen / Bestellen</h2></div>
+  {% if cart_count > 0 %}
+  <p class="notice">Im Warenkorb: <strong>{{ cart_count }}</strong> Position(en). <a href="/buchen/alle">Weiter bestellen</a></p>
+  {% endif %}
+  <form method="get" action="/buchen/alle" class="filters hide-labels-sm row-sm">
+    <label class="grow">Schnellsuche über alle Getränke
+      <input type="text" name="q" placeholder="Produktname" autocomplete="off">
+    </label>
+    <button type="submit" class="btn primary">Suchen</button>
+  </form>
+  <nav class="tiles two" aria-label="Kategorien">
+    {% for c in categories %}
+    <a class="tile" href="/buchen/{{ c.id }}">
+      <span class="tile-title">{{ c.name }}</span>
+      <span class="tile-text">{{ c.product_count }} Produkte</span>
+    </a>
+    {% endfor %}
+    <a class="tile" href="/buchen/alle">
+      <span class="tile-title">Alle</span>
+      <span class="tile-text">Alles auf einen Blick</span>
+    </a>
+  </nav>
+</main>
+{% endblock %}

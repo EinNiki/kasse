@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="narrow">
+  <div class="card">
+    <h2>Bestand ändern</h2>
+    <p class="muted">{{ product_name }} · aktuell <strong>{{ stock }}</strong> auf Lager</p>
+    {% if let Some(e) = error %}<p class="notice error" role="alert">{{ e }}</p>{% endif %}
+    <form method="post" action="{{ action }}" class="stack">
+      {% include "_csrf.html" %}
+      <fieldset class="choice">
+        <legend>Aktion</legend>
+        <label class="radio"><input type="radio" name="mode" value="add" {% if mode != "remove" %}checked{% endif %}> Hinzufügen (Wareneingang)</label>
+        <label class="radio"><input type="radio" name="mode" value="remove" {% if mode == "remove" %}checked{% endif %}> Entfernen (Korrektur)</label>
+      </fieldset>
+      <label>Menge
+        <input type="text" name="quantity" value="{{ quantity }}" inputmode="numeric" autocomplete="off" required autofocus>
+      </label>
+      <label>Kommentar (optional)
+        <input type="text" name="comment" value="{{ comment }}" maxlength="200" placeholder="z. B. Lieferung vom Getränkehändler">
+      </label>
+      <div class="row">
+        <a class="btn" href="/lager">Abbrechen</a>
+        <button type="submit" class="btn primary">Buchen</button>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="wide">
+  <div class="page-head"><h2>Statistik</h2></div>
+  <section class="stats three" aria-label="Umsatz">
+    <div class="stat dark"><span class="stat-label">Umsatz heute</span><span class="stat-value">{{ today }}</span></div>
+    <div class="stat"><span class="stat-label">Umsatz diese Woche</span><span class="stat-value">{{ week }}</span></div>
+    <div class="stat"><span class="stat-label">Umsatz diesen Monat</span><span class="stat-value">{{ month }}</span></div>
+  </section>
+
+  <div id="period" hx-target="#period" hx-select="#period" hx-swap="morph:outerHTML" hx-push-url="true">
+  <form method="get" action="/statistik" id="range" class="filters range" hx-get="/statistik" hx-trigger="change">
+    <label>Von <input type="date" name="von" value="{{ from }}" required></label>
+    <label>Bis <input type="date" name="bis" value="{{ to }}" required></label>
+    <noscript><button type="submit" class="btn">Anzeigen</button></noscript>
+    <nav class="chips" aria-label="Zeitraum">
+      {% for l in links %}<a class="chip {% if l.active %}active{% endif %}" href="{{ l.href }}" {% if l.active %}aria-current="true"{% endif %} hx-get="{{ l.href }}">{{ l.label }}</a>{% endfor %}
+    </nav>
+  </form>
+
+  <div id="stats">
+  <h3 class="section-title">Zeitraum {{ period_label }}</h3>
+  <section class="stats three" aria-label="Zeitraum">
+    <div class="stat"><span class="stat-label">Umsatz</span><span class="stat-value">{{ revenue }}</span></div>
+    <div class="stat"><span class="stat-label">Verkäufe</span><span class="stat-value">{{ sales_count }}</span></div>
+    <div class="stat"><span class="stat-label">Ø je Verkauf</span><span class="stat-value">{{ average }}</span></div>
+  </section>
+
+  <div class="two-col">
+    <section>
+      <h3 class="section-title">Top-Produkte nach Menge</h3>
+      <div class="table-wrap"><table class="responsive">
+        <thead><tr><th>Produkt</th><th class="num">Menge</th><th class="num">Umsatz</th></tr></thead>
+        <tbody>
+          {% for r in top_quantity %}<tr><td data-label="Produkt">{{ r.name }}</td><td data-label="Menge" class="num">{{ r.quantity }}</td><td data-label="Umsatz" class="num">{{ r.revenue }}</td></tr>{% endfor %}
+          {% if top_quantity.is_empty() %}<tr><td colspan="3" class="muted">Keine Verkäufe im Zeitraum.</td></tr>{% endif %}
+        </tbody>
+      </table></div>
+    </section>
+    <section>
+      <h3 class="section-title">Top-Produkte nach Umsatz</h3>
+      <div class="table-wrap"><table class="responsive">
+        <thead><tr><th>Produkt</th><th class="num">Umsatz</th><th class="num">Menge</th></tr></thead>
+        <tbody>
+          {% for r in top_revenue %}<tr><td data-label="Produkt">{{ r.name }}</td><td data-label="Umsatz" class="num">{{ r.revenue }}</td><td data-label="Menge" class="num">{{ r.quantity }}</td></tr>{% endfor %}
+          {% if top_revenue.is_empty() %}<tr><td colspan="3" class="muted">Keine Verkäufe im Zeitraum.</td></tr>{% endif %}
+        </tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <h3 class="section-title">Umsatz pro Kategorie</h3>
+  <div class="table-wrap"><table class="responsive">
+    <thead><tr><th>Kategorie</th><th class="num">Menge</th><th class="num">Umsatz</th><th class="num">Anteil</th></tr></thead>
+    <tbody>
+      {% for r in categories %}<tr><td data-label="Kategorie">{{ r.name }}</td><td data-label="Menge" class="num">{{ r.quantity }}</td><td data-label="Umsatz" class="num">{{ r.revenue }}</td><td data-label="Anteil" class="num">{{ r.share }}</td></tr>{% endfor %}
+      {% if categories.is_empty() %}<tr><td colspan="4" class="muted">Keine Verkäufe im Zeitraum.</td></tr>{% endif %}
+    </tbody>
+  </table></div>
+
+  <h3 class="section-title">Letzte Verkäufe</h3>
+  <div class="table-wrap"><table class="responsive">
+    <thead><tr><th>Zeit</th><th>Positionen</th><th>Benutzer</th><th class="num">Summe</th></tr></thead>
+    <tbody>
+      {% for s in sales %}<tr><td data-label="Zeit" class="muted">{{ s.time }}</td><td data-label="Positionen">{{ s.items }}</td><td data-label="Benutzer" class="muted">{{ s.user }}</td><td data-label="Summe" class="num">{{ s.total }}</td></tr>{% endfor %}
+      {% if sales.is_empty() %}<tr><td colspan="4" class="muted">Keine Verkäufe im Zeitraum.</td></tr>{% endif %}
+    </tbody>
+  </table></div>
+  </div>
+  </div>
+</main>
+{% endblock %}

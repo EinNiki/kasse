@@ -1,0 +1,135 @@
+use argon2::password_hash::{
+    rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString,
+};
+use argon2::Argon2;
+use axum::extract::{Request, State};
+use axum::middleware::Next;
+use axum::response::{IntoResponse, Redirect, Response};
+use axum_extra::extract::cookie::CookieJar;
+use rand::RngCore;
+use sha2::{Digest, Sha256};
+
+use crate::error::AppError;
+use crate::{db, AppState};
+
+pub const SESSION_COOKIE: &str = "kasse_session";
+pub const LOGIN_CSRF_COOKIE: &str = "kasse_login_csrf";
+pub const SESSION_HOURS: i64 = 12;
+
+/// The logged-in user, inserted into request extensions by `require_auth`.
+#[derive(Clone, Debug)]
+pub struct CurrentUser {
+    pub id: i64,
+    pub username: String,
+    pub csrf_token: String,
+    pub token_hash: String,
+    pub is_admin: bool,
+}
+
+pub fn hash_password(password: &str) -> Result<String, AppError> {
+    let salt = SaltString::generate(&mut OsRng);
+    Argon2::default()
+        .hash_password(password.as_bytes(), &salt)
+        .map(|h| h.to_string())
+        .map_err(|e| AppError::Internal(format!("password hashing failed: {e}")))
+}
+
+/// Argon2 takes tens of milliseconds of CPU: run it on the blocking pool so other requests keep flowing.
+pub async fn hash_password_async(password: String) -> Result<String, AppError> {
+    tokio::task::spawn_blocking(move || hash_password(&password))
+        .await
+        .map_err(|e| AppError::Internal(format!("hash task failed: {e}")))?
+}
+
+pub async fn verify_password_async(password: String, hash: String) -> bool {
+    tokio::task::spawn_blocking(move || verify_password(&password, &hash))
+        .await
+        .unwrap_or(false)
+}
+
+pub fn verify_password(password: &str, hash: &str) -> bool {
+    match PasswordHash::new(hash) {
+        Ok(parsed) => Argon2::default()
+            .verify_password(password.as_bytes(), &parsed)
+            .is_ok(),
+        Err(_) => false,
+    }
+}
+
+/// Random 256-bit token, hex encoded.
+pub fn random_token() -> String {
+    let mut bytes = [0u8; 32];
+    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    hex::encode(bytes)
+}
+
+/// Sessions are stored by token hash so a DB leak does not expose usable cookies.
+pub fn hash_token(token: &str) -> String {
+    hex::encode(Sha256::digest(token.as_bytes()))
+}
+
+/// Constant-time string comparison for CSRF tokens.
+pub fn tokens_match(a: &str, b: &str) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    a.bytes()
+        .zip(b.bytes())
+        .fold(0u8, |acc, (x, y)| acc | (x ^ y))
+        == 0
+}
+
+pub fn verify_csrf(user: &CurrentUser, submitted: &str) -> Result<(), AppError> {
+    if tokens_match(&user.csrf_token, submitted) {
+        Ok(())
+    } else {
+        Err(AppError::Forbidden)
+    }
+}
+
+/// Auth middleware: everything behind it requires a valid session.
+pub async fn require_auth(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    mut req: Request,
+    next: Next,
+) -> Response {
+    let Some(cookie) = jar.get(SESSION_COOKIE) else {
+        return Redirect::to("/login").into_response();
+    };
+    let token_hash = hash_token(cookie.value());
+    match db::sessions::find_valid(&state.pool, &token_hash).await {
+        Ok(Some(s)) => {
+            req.extensions_mut().insert(CurrentUser {
+                id: s.user_id,
+                username: s.username,
+                csrf_token: s.csrf_token,
+                token_hash,
+                is_admin: s.is_admin,
+            });
+            next.run(req).await
+        }
+        Ok(None) => Redirect::to("/login").into_response(),
+        Err(e) => AppError::from(e).into_response(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn password_roundtrip() {
+        let h = hash_password("geheim").unwrap();
+        assert!(verify_password("geheim", &h));
+        assert!(!verify_password("falsch", &h));
+        assert!(!verify_password("geheim", "kein-hash"));
+    }
+
+    #[test]
+    fn token_compare() {
+        assert!(tokens_match("abc", "abc"));
+        assert!(!tokens_match("abc", "abd"));
+        assert!(!tokens_match("abc", "abcd"));
+    }
+}
