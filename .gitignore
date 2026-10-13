@@ -1,3 +1,8 @@
 /target
 .env
 /backups
+
+# never commit certificates or keys
+*.crt
+*.pem
+*.key
