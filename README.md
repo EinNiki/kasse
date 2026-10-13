@@ -72,6 +72,22 @@ echo 'EinSicheresPasswort' | docker compose run --rm -T app /app/kasse create-us
 
 Rollen: **Admin** (alles, inklusive Benutzerverwaltung) und **Benutzer** (Buchen, Lager, Statistik). Der erste Benutzer ist Admin.
 
+## Projektstruktur
+
+| Pfad | Inhalt |
+|---|---|
+| `src/` | Rust-Code: `routes/` (Seiten), `db/` (alle SQL-Abfragen), `auth.rs`, `cart.rs`, `money.rs`, `ratelimit.rs`, `seed.rs`, `templates.rs` |
+| `templates/` | askama-HTML (ein Ordner je Bereich, `base.html` als Rahmen) |
+| `static/` | Eine CSS-Datei, `app.js` (nur Konfiguration), htmx und Idiomorph, Schriften, Hintergrundformen, jeweils mit Lizenz |
+| `migrations/` | Datenbank-Migrationen, laufen beim Start |
+| `.sqlx/` | Zwischenspeicher der geprüften SQL-Abfragen, damit ohne Datenbank gebaut werden kann (nach SQL-Änderungen neu erzeugen) |
+| `tests/` | Integrationstests gegen echte PostgreSQL-Datenbanken |
+| `scripts/backup.sh` | Datenbank-Sicherung |
+| `docs/` | Ausgangsmaterial: `preisliste/` (Quelle der Getränkeliste in `seed.rs`) und `wireframes/` (Entwürfe der ersten Bildschirme) |
+| `.claude/skills/` | Arbeitsregeln für Claude Code in diesem Projekt (Design, Rust, Lagerregeln, Docker, Ablauf) |
+| `.github/` | CI-Workflow und Dependabot |
+| `Dockerfile`, `docker-compose.yml`, `docker-compose.build.yml`, `.env.example` | Image, Betrieb, lokaler Bau, Vorlage für die Einstellungen |
+
 ## Migrationen
 
 Migrationen liegen in `migrations/` und laufen beim App-Start automatisch (`sqlx::migrate!`).
