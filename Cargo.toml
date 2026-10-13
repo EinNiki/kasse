@@ -9,7 +9,7 @@ axum-extra = { version = "0.12", features = ["cookie"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal"] }
 tower-http = { version = "0.6", features = ["fs", "trace"] }
 sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "postgres", "migrate", "macros", "chrono", "json"] }
-askama = "0.14"
+askama = "0.16"
 argon2 = "0.6"
 rand = "0.10"
 sha2 = "0.11"
