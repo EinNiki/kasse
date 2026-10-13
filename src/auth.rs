@@ -6,7 +6,6 @@ use axum::extract::{Request, State};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::cookie::CookieJar;
-use rand::RngCore;
 use sha2::{Digest, Sha256};
 
 use crate::error::AppError;
@@ -59,7 +58,7 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
 /// Random 256-bit token, hex encoded.
 pub fn random_token() -> String {
     let mut bytes = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    rand::fill(&mut bytes); // thread-local CSPRNG, seeded from the OS
     hex::encode(bytes)
 }
 

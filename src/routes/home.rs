@@ -1,7 +1,7 @@
 use axum::extract::State;
 use axum::response::Html;
 use axum::Extension;
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 
 use crate::auth::CurrentUser;
 use crate::error::AppError;
@@ -33,9 +33,7 @@ pub async fn home(
         ctx: page_ctx(&user),
         title: "Start",
         is_admin: user.is_admin,
-        headline: *HEADLINES
-            .choose(&mut rand::thread_rng())
-            .unwrap_or(&HEADLINES[0]),
+        headline: *HEADLINES.choose(&mut rand::rng()).unwrap_or(&HEADLINES[0]),
         revenue: format_eur(summary.revenue_cents),
         sales_count: summary.sales_count,
         product_count: summary.product_count,
