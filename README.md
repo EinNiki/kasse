@@ -53,11 +53,11 @@ HSTS, sobald der Proxy `X-Forwarded-Proto: https` mitschickt (Nginx Proxy Manage
 | Bereich | Was geht |
 |---|---|
 | **Buchen / Bestellen** | Kategorie wählen (oder „Alle“), Suche und Kategorie-Filter, Die Suche ist live: schon beim Tippen erscheinen die Treffer, der beste (Name beginnt mit dem Suchbegriff) zuerst. Produktkachel antippen legt sie in den Warenkorb (rechts). Warenkorb mit +/−, Entfernen und Summe. Ausverkaufte Produkte sind sichtbar, aber gesperrt. Produkte können auf „unbegrenzt“ gesetzt werden (kein Bestand, immer verkäuflich). „Abbuchen“: Betrag unter „Gegeben“ eintippen (oder Schnellbetrag wählen), das Rückgeld erscheint sofort. Danach Bestätigung mit Summe und Rückgeld. |
-| **Lager** | Produkte mit Live-Suche und Kategorie-Filter. Anlegen, Bearbeiten, Löschen (Soft-Delete, Verkäufe bleiben erhalten). Bestand „Hinzufügen“ (Wareneingang) und „Entfernen“ (Korrektur) mit Menge und Kommentar. Reiter „Bewegungen“ zeigt das Protokoll, Reiter „Kategorien“ legt Kategorien an, benennt um und löscht (nur leere). |
+| **Lager** | Produkte mit Live-Suche und Kategorie-Filter. Anlegen, Bearbeiten, Löschen (Soft-Delete, Verkäufe bleiben erhalten). Bestand „Hinzufügen“ (Wareneingang) und „Entfernen“ (Korrektur) mit Menge und Kommentar. Produkte lassen sich auf „unbegrenzt“ stellen (dann kein Bestand). Reiter „Bewegungen“ zeigt das Protokoll (auch Verkäufe unbegrenzter Produkte), Reiter „Kategorien“ legt Kategorien an, benennt um und löscht (nur leere). |
 | **Admin** (nur für Admins sichtbar) | Benutzer anlegen (optional als Admin), Passwort setzen, Admin-Rechte vergeben oder entziehen, Benutzer deaktivieren oder wieder aktivieren (Benutzer mit Verkäufen werden nie gelöscht, damit die Historie erhalten bleibt). Man kann sich weder selbst deaktivieren noch die eigenen Admin-Rechte entziehen, damit immer ein Admin übrig bleibt. |
 | **Statistik** | Umsatz heute, Woche, Monat. Für einen frei wählbaren Zeitraum: Umsatz, Anzahl Verkäufe, Ø je Verkauf, Top-Produkte nach Menge und Umsatz, Umsatz pro Kategorie, letzte Verkäufe mit Uhrzeit. Tagesgrenzen gelten in deutscher Zeit (Europe/Berlin). |
 
-Regeln: Der Bestand wird nie negativ (weder beim Verkauf noch bei Korrektur, zusätzlich per CHECK-Constraint in der DB).
+Regeln: Der Bestand wird nie negativ (weder beim Verkauf noch bei Korrektur, zusätzlich per CHECK-Constraint in der DB). Unbegrenzte Produkte werden nicht gezählt.
 Abbuchen läuft in einer Transaktion mit Zeilensperre; reicht der Bestand nicht oder das Geld nicht, wird nichts gebucht.
 Preise werden als Cent (`i64`) gespeichert, jede Verkaufsposition merkt sich Name und Preis zum Verkaufszeitpunkt.
 
@@ -107,7 +107,7 @@ Soft-Delete, Kategorie-Regeln, Seed, Statistik sowie den kompletten Ablauf über
   Anmeldung per `scram-sha-256`.
 - **Integrität in der DB:** CHECK-Constraints (Bestand ≥ 0, Preise ≥ 0, Menge > 0, Gegeben ≥ Summe), Fremdschlüssel, Benutzer- und Kategorienamen
   eindeutig ohne Beachtung der Groß-/Kleinschreibung.
-- **Container:** App läuft ohne Root, mit schreibgeschütztem Dateisystem, ohne Linux-Capabilities und `no-new-privileges`.
+- **Container:** Das Image enthält nur die App und ihre Dateien (kein Betriebssystem, keine Shell). Sie läuft ohne Root, mit schreibgeschütztem Dateisystem, ohne Linux-Capabilities und `no-new-privileges`.
 - **Verbindung:** Hinter einem HTTPS-Proxy, HSTS, Cookies `Secure`/`HttpOnly`/`SameSite=Lax`. Antworten tragen Content-Security-Policy (nur eigene Dateien, keine Inline-Skripte), `X-Frame-Options: DENY`, `nosniff`; dynamische Seiten sind `no-store`.
 - **Zugangsdaten:** Nur in `.env` (`chmod 600`, nicht im Repo). Die Platzhalter aus `.env.example` werden von App und Compose abgelehnt bzw. verlangt.
 - **Sitzungen** liegen nur als SHA-256-Hash in der DB, Passwörter als argon2. Nach 5 falschen Anmeldungen wird der Benutzername 5 Minuten gesperrt.

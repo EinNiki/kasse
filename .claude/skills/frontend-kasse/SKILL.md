@@ -33,10 +33,10 @@ Auf der Kasse zählen trotzdem Tempo und Lesbarkeit: Dekoration darf nie die Bed
 - Icons: handgezeichnetes Inline-SVG, Strichstärke 1,5, in blassen Kreisen
 - Seitenwechsel: ruhig wie das Öffnen einer App auf iOS. Die alte Seite blendet in 180 ms aus, die neue setzt sich in 460 ms (`--ease-apple`) von etwas kleiner und tiefer ein. Nur bei echten Seitenwechseln (View-Transition-Typ `page`), die Kopfzeile bleibt stehen. Keine Verwandlung von Kacheln in Seiten. Auch beim Öffnen der Buchungsseite
 - Live-Updates (htmx + Idiomorph, `hx-swap="morph:…"`) ändern Elemente an Ort und Stelle: unveränderte Elemente werden nie angefasst, nur geänderte Texte und Klassen aktualisieren sich (CSS-Übergänge animieren den Unterschied). Kein Neuladen, kein Ausblenden, kein Springen. Klicks beim Buchen laufen per `hx-boost` ohne Seitenwechsel und werden mit `hx-sync="queue all"` der Reihe nach abgearbeitet, damit kein Tippen verloren geht
-- Reiter (Lager) tauschen nur `#lager-body` aus; der neue Inhalt blendet ein und steigt dabei 10 px auf (280 ms), die Linie unter dem aktiven Reiter zeichnet sich in 340 ms. Für alle drei Reiter gleich. Keine View-Transitions für Teil-Updates
+- Reiter (Lager) tauschen nur `#lager-body` aus. Der neue Inhalt gleitet 22 px seitlich ein und blendet dabei ein (380 ms): vorwärts (Produkte → Bewegungen → Kategorien) von rechts, rückwärts von links. Die Richtung setzt `static/app.js` als Klasse `slide-fwd`/`slide-back` nach dem Austausch. Die Linie unter dem aktiven Reiter ist fest, keine View-Transitions für Teil-Updates. `html { scrollbar-gutter: stable }` verhindert, dass die Seite beim Wechsel seitlich springt
 - Suche ist sofort: kein Debounce, `hx-sync="this:replace"` (der neueste Tastendruck gewinnt), Antwort in ca. 10 ms. Kein Redis oder anderer Cache nötig
 - Nach jedem Live-Update wird die Scroll-Position wiederhergestellt (`static/app.js`), nichts springt
-- Sticky Leisten (Kopfzeile, Suche mit Kategorien) sind deckend, reichen bis an die Ränder des Arbeitsbereichs und haben einen weichen unteren Rand; auf der Buchungsseite entfallen die Hintergrundformen
+- Die Kopfzeile ist deckend. Die Leiste mit Suche und Kategorien beim Buchen ist **kein sichtbarer Kasten**: sie malt dasselbe wie die Seite dahinter (`bg-shapes.svg` mit `background-attachment: fixed` auf der Hintergrundfarbe), kein Rand, kein Schatten; auf dem Handy, wo die Formen fehlen, ist sie einfarbig. Die Hintergrundformen bleiben auch auf der Buchungsseite sichtbar
 - Abbuchen: Schnellbeträge und Eingabe aktualisieren nur `#pay` an Ort und Stelle (Morph), die Seite lädt nicht neu
 - Keine Dauer-Animationen (nichts bewegt sich von allein)
 - Bei `prefers-reduced-motion: reduce` entfallen alle Animationen, Übergänge und Hover-Bewegungen
@@ -66,7 +66,7 @@ Auf der Kasse zählen trotzdem Tempo und Lesbarkeit: Dekoration darf nie die Bed
 - Breakpoints: 1100 px (Tablet quer), 900 px (eine Spalte), 640 px (Handy). Nirgends horizontales Scrollen.
 - Tabellen bekommen `class="responsive"` und an jedem `<td>` ein `data-label`; auf dem Handy werden sie zu gestapelten Karten.
 - Buchen auf dem Handy: Warenkorb unter den Kacheln, feste Leiste „Abbuchen · Summe“ unten.
-- Suchfelder sind live (htmx, `input changed delay:150ms`), funktionieren ohne JavaScript weiter als normales GET-Formular.
+- Suchfelder sind live (htmx, `input changed`, ohne Verzögerung), funktionieren ohne JavaScript weiter als normales GET-Formular.
 - Handy (bis 640 px): Basisschrift 16 px, kompakte Abstände, Kacheln 2 pro Reihe, Touch-Ziele mindestens 44 px
 - Statistik: Von, Bis und Zeitraum-Buttons liegen im selben 3-Spalten-Raster wie die Kennzahl-Kästen darüber und darunter
 - Alle Steuerelemente in einer Filterzeile haben dieselbe Höhe (56 px) und dieselbe Unterkante.

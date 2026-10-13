@@ -11,6 +11,11 @@ description: Use when implementing sales, stock movements, prices, or statistics
 - Prüfen: Bestand reicht für alle Positionen. Falls nicht, Fehler zurückgeben und nichts buchen.
 - Bestand reduzieren, `sales` und `sale_items` schreiben, `stock_movements` mit negativem Delta eintragen. Alles oder nichts.
 
+## Unbegrenzte Produkte
+- `products.unlimited`: kein Bestandscheck, der Bestand ändert sich beim Verkauf nicht. Der Verkauf steht trotzdem in `sale_items` und als Bewegung (Delta negativ, Grund „Verkauf“).
+- Wareneingang und Korrektur sind dafür gesperrt (`StockError::Unlimited`). Im Warenkorb gilt eine Obergrenze von 999.
+- Unbegrenzte Produkte zählen nicht als „ausverkauft“.
+
 ## Wareneingang und Korrektur
 - Jede Änderung erzeugt einen Eintrag in `stock_movements` mit `delta`, `reason` und optionalem `comment`.
 - Bestand darf nie negativ werden, auch nicht durch Korrektur.

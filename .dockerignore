@@ -1,4 +1,9 @@
-target
-.git
-.env
-docs
+# Only what the image build needs (Dockerfile COPY lines); everything else stays out of the build context.
+*
+!Cargo.toml
+!Cargo.lock
+!.sqlx
+!migrations
+!templates
+!src
+!static
