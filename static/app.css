@@ -269,11 +269,10 @@ form.row { margin: 0; }
 }
 .tabs a:hover { color: var(--foreground); }
 .tabs a.active { color: var(--foreground); }
-.tabs a.active::after { /* the line draws itself under the new tab */
+.tabs a.active::after { /* active tab marker */
   content: ""; position: absolute; left: calc(var(--space) * 2.5); right: calc(var(--space) * 2.5); bottom: 0; height: 2px;
-  background: var(--interactive); border-radius: 2px; transform-origin: left center; animation: tab-line 340ms var(--ease-apple) both;
+  background: var(--interactive); border-radius: 2px; 
 }
-@keyframes tab-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 .filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--space) * 2); margin: 0 0 calc(var(--space) * 3); }
 .filters .grow { flex: 1; min-width: 220px; }
@@ -289,9 +288,11 @@ form.row { margin: 0; }
 
 select, input[type="date"] {
   min-height: 56px; padding: 0 calc(var(--space) * 3); font: inherit; font-weight: 400; color: var(--foreground);
-  background: var(--card-soft); border: 1px solid transparent; border-radius: var(--radius-pill);
+  background-color: var(--card-soft); border: 1px solid transparent; border-radius: var(--radius-pill);
 }
-select:focus, input[type="date"]:focus { border-color: var(--primary); background: var(--card); outline: none; }
+/* Own arrow, set well inside the pill instead of at the very edge. */
+select { appearance: none; -webkit-appearance: none; padding-right: calc(var(--space) * 7); background-image: url("/static/chevron.svg"); background-repeat: no-repeat; background-position: right calc(var(--space) * 3) center; background-size: 14px; }
+select:focus, input[type="date"]:focus { border-color: var(--primary); background-color: var(--card); outline: none; }
 select:focus-visible, input[type="date"]:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 fieldset.choice { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space); }
@@ -346,8 +347,10 @@ td.actions .btn + .btn { margin-left: var(--space); }
   /* reaches to the edges of the work area and has a soft lower edge, so scrolling tiles disappear behind it cleanly */
   margin: calc(var(--space) * -1) calc(var(--space) * -3) 0 calc(var(--space) * -4);
   padding: var(--space) calc(var(--space) * 3) calc(var(--space) * 1.5) calc(var(--space) * 4);
-  background: var(--background); box-shadow: 0 10px 10px -12px rgba(45, 58, 49, 0.45);
+  background: var(--background); border-bottom: 1px solid var(--border); box-shadow: 0 8px 8px -10px rgba(45, 58, 49, 0.35);
 }
+/* The tiles start clearly below the divider line instead of touching it. */
+.shop-main > .products { padding-top: calc(var(--space) * 2.5); }
 .shop-tools .chips { margin-bottom: 0; }
 /* The decorative background shapes would show through the bar edges: the work screen is plain. */
 body:has(.shop)::before { display: none; }
@@ -441,10 +444,6 @@ body:has(.shop)::before { display: none; }
 
 html:active-view-transition-type(page)::view-transition-old(root) { animation: vt-out 180ms ease-in both; mix-blend-mode: normal; }
 html:active-view-transition-type(page)::view-transition-new(root) { animation: vt-in 460ms var(--ease-apple) 60ms both; mix-blend-mode: normal; }
-/* Lager tabs: only the area below the tabs is replaced. The new content fades in while it rises
-   a few pixels, the same for Produkte, Bewegungen and Kategorien. */
-#lager-body { transition: opacity 280ms var(--ease-apple), transform 280ms var(--ease-apple); }
-#lager-body.htmx-added { opacity: 0; transform: translateY(10px); }
 
 /* Live updates are morphed in place (idiomorph): unchanged elements are never touched, changed
    text and classes update where they are and CSS transitions animate the difference.
@@ -517,6 +516,7 @@ html:active-view-transition-type(page)::view-transition-new(root) { animation: v
   .btn.small { min-height: 44px; padding: 0 calc(var(--space) * 2); }
   .topbar .btn { min-height: 40px; padding: 0 calc(var(--space) * 2); }
   input[type="text"], input[type="password"], input[type="search"], select, input[type="date"] { min-height: 48px; padding: 0 calc(var(--space) * 2); font-size: 16px; }
+  select { padding-right: calc(var(--space) * 6); background-position: right calc(var(--space) * 2) center; }
   label { font-size: 14px; gap: 6px; }
   .card { padding: calc(var(--space) * 2.5); border-radius: 20px; }
   .page-head { margin-bottom: calc(var(--space) * 2); flex-wrap: wrap; }
