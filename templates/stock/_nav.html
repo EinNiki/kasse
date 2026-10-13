@@ -1,5 +1,5 @@
 <nav class="tabs" id="lager-tabs" aria-label="Lager"
-     hx-target="#lager-body" hx-select="#lager-body" hx-select-oob="#lager-tabs" hx-swap="outerHTML transition:true" hx-push-url="true">
+     hx-target="#lager-body" hx-select="#lager-body" hx-select-oob="#lager-tabs" hx-swap="outerHTML" hx-push-url="true">
   <a href="/lager" hx-get="/lager" {% if tab == "produkte" %}class="active" aria-current="page"{% endif %}>Produkte</a>
   <a href="/lager/bewegungen" hx-get="/lager/bewegungen" {% if tab == "bewegungen" %}class="active" aria-current="page"{% endif %}>Bewegungen</a>
   <a href="/lager/kategorien" hx-get="/lager/kategorien" {% if tab == "kategorien" %}class="active" aria-current="page"{% endif %}>Kategorien</a>

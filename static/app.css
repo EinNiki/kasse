@@ -39,7 +39,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: calc(var(--topbar-h) + 8px); }
+html { scrollbar-gutter: stable; overflow-x: clip; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: calc(var(--topbar-h) + 8px); }
 a, button, input, select, label, summary { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 body {
@@ -347,8 +347,9 @@ td.actions .btn + .btn { margin-left: var(--space); }
   /* reaches to the edges of the work area and has a soft lower edge, so scrolling tiles disappear behind it cleanly */
   margin: 0 calc(var(--space) * -3) 0 calc(var(--space) * -4);
   padding: calc(var(--space) * 2) calc(var(--space) * 3) calc(var(--space) * 2.5) calc(var(--space) * 4);
-  /* no visible box: the bar fades out towards its lower edge, so tiles vanish softly and the background pattern stays visible */
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--background) 97%, transparent) 82%, transparent);
+  /* No visible box: the bar paints exactly what the page paints behind it (same fixed pattern on the same colour),
+     so only the search field and the chips are seen and the tiles disappear under an invisible edge. */
+  background: url("/static/bg-shapes.svg") center / cover no-repeat fixed, var(--background);
 }
 /* Tiles start a little below the search bar. */
 .shop-main > .products { padding-top: calc(var(--space) * 1); }
@@ -444,11 +445,12 @@ td.actions .btn + .btn { margin-left: var(--space); }
 html:active-view-transition-type(page)::view-transition-old(root) { animation: vt-out 180ms ease-in both; mix-blend-mode: normal; }
 html:active-view-transition-type(page)::view-transition-new(root) { animation: vt-in 460ms var(--ease-apple) 60ms both; mix-blend-mode: normal; }
 
-/* Lager tabs: the old content dissolves into the new one (view transition on #lager-body only),
-   slowly and without any movement. */
-#lager-body { view-transition-name: lager-body; }
-::view-transition-group(lager-body) { animation-duration: 420ms; animation-timing-function: var(--ease-apple); }
-::view-transition-old(lager-body), ::view-transition-new(lager-body) { animation-duration: 420ms; animation-timing-function: ease-in-out; }
+/* Lager tabs: the new content slides in a few pixels from the side the tab lies on, forwards
+   (Produkte -> Bewegungen -> Kategorien) from the right, backwards from the left. */
+#lager-body.slide-fwd { animation: lager-in-fwd 380ms var(--ease-apple) both; }
+#lager-body.slide-back { animation: lager-in-back 380ms var(--ease-apple) both; }
+@keyframes lager-in-fwd { from { opacity: 0; transform: translateX(22px); } }
+@keyframes lager-in-back { from { opacity: 0; transform: translateX(-22px); } }
 
 /* Live updates are morphed in place (idiomorph): unchanged elements are never touched, changed
    text and classes update where they are and CSS transitions animate the difference.
@@ -615,6 +617,7 @@ html:active-view-transition-type(page)::view-transition-new(root) { animation: v
 @media (max-width: 640px) {
   :root { --topbar-h: 57px; }
   body::before { display: none; }
+  .shop-tools { background: var(--background); }
   .topbar { min-height: 56px; }
   main { padding-top: calc(var(--space) * 2); }
   .page-head { margin-bottom: var(--space); }
