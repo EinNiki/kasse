@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT p.id, p.category_id, c.name AS \"category_name?\", p.name, p.price_cents, p.stock\n           FROM products p LEFT JOIN categories c ON c.id = p.category_id\n           WHERE p.active AND p.id = $1",
+  "query": "SELECT p.id, p.category_id, c.name AS \"category_name?\", p.name, p.price_cents, p.stock, p.unlimited\n           FROM products p LEFT JOIN categories c ON c.id = p.category_id\n           WHERE p.active AND p.id = $1",
   "describe": {
     "columns": [
       {
@@ -68,6 +68,17 @@
             "name": "stock"
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "unlimited",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "unlimited"
+          }
+        }
       }
     ],
     "parameters": {
@@ -81,8 +92,9 @@
       true,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "b4d2540b5c12c0cb915972f537140972caa39558965ec22d4978bc8f241af20b"
+  "hash": "cd5e03915eb2f3a4a6a1337ff7c9ee07fea3fdeda6bff8df2f270ca603727daa"
 }

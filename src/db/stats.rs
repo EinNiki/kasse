@@ -19,7 +19,7 @@ pub async fn home_summary(pool: &PgPool) -> Result<HomeSummary, sqlx::Error> {
     .fetch_one(pool)
     .await?;
     let products = sqlx::query!(
-        r#"SELECT COUNT(*) AS "product_count!", COUNT(*) FILTER (WHERE stock = 0) AS "sold_out_count!"
+        r#"SELECT COUNT(*) AS "product_count!", COUNT(*) FILTER (WHERE stock = 0 AND NOT unlimited) AS "sold_out_count!"
            FROM products WHERE active"#
     )
     .fetch_one(pool)

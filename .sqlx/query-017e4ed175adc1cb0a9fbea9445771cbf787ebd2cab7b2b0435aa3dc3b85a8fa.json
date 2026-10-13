@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT name, price_cents, stock, active FROM products WHERE id = $1 FOR UPDATE",
+  "query": "SELECT name, price_cents, stock, unlimited, active FROM products WHERE id = $1 FOR UPDATE",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "unlimited",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "unlimited"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "active",
         "type_info": "Bool",
         "origin": {
@@ -57,8 +68,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "43539855953f549c81fd87b142200a39d6cd460a10a3a671b55049806108366f"
+  "hash": "017e4ed175adc1cb0a9fbea9445771cbf787ebd2cab7b2b0435aa3dc3b85a8fa"
 }

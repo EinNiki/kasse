@@ -22,6 +22,15 @@ async fn load_cart(state: &AppState, user: &CurrentUser) -> Result<(Vec<CartItem
     Ok((items, total))
 }
 
+/// Most units of one product in a cart: the stock, or a sane cap for unlimited products.
+fn cart_limit(unlimited: bool, stock: i32) -> i32 {
+    if unlimited {
+        cart::UNLIMITED_CART_MAX
+    } else {
+        stock
+    }
+}
+
 // ---------- Category selection ----------
 
 pub async fn categories(
@@ -95,8 +104,9 @@ pub async fn shop(
             name: p.name.clone(),
             price: format_eur(p.price_cents),
             stock: p.stock,
-            disabled: p.stock <= in_cart(p.id),
-            low: p.stock > 0 && p.stock <= 5,
+            unlimited: p.unlimited,
+            disabled: !p.unlimited && p.stock <= in_cart(p.id),
+            low: !p.unlimited && p.stock > 0 && p.stock <= 5,
         })
         .collect();
 
@@ -120,7 +130,7 @@ pub async fn shop(
                 quantity: i.quantity,
                 unit_price: format_eur(i.unit_price_cents),
                 line_total: format_eur(i.unit_price_cents * i64::from(i.quantity)),
-                can_plus: i.quantity < i.stock,
+                can_plus: i.quantity < cart_limit(i.unlimited, i.stock),
             })
             .collect(),
         total: format_eur(total),
@@ -146,11 +156,11 @@ pub async fn cart_action(
     match action.as_str() {
         "add" | "plus" => {
             // The stock limit is read first; the cart itself never holds more than is available.
-            let stock = db::products::get(&state.pool, product_id)
+            let limit = db::products::get(&state.pool, product_id)
                 .await?
-                .map_or(0, |p| p.stock);
+                .map_or(0, |p| cart_limit(p.unlimited, p.stock));
             db::sessions::update_cart(&state.pool, &user.token_hash, |l| {
-                cart::add(l, product_id, stock)
+                cart::add(l, product_id, limit)
             })
             .await?;
         }

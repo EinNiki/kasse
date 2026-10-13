@@ -43,6 +43,7 @@ pub struct ProductView {
     pub name: String,
     pub category: String,
     pub stock: i32,
+    pub unlimited: bool,
     pub price: String,
 }
 
@@ -68,6 +69,7 @@ pub struct ProductFormTemplate {
     pub heading: String,
     pub name: String,
     pub price: String,
+    pub unlimited: bool,
     pub categories: Vec<CategoryOption>,
     pub error: Option<String>,
     pub delete_url: Option<String>,
@@ -164,6 +166,7 @@ pub struct ProductTile {
     pub name: String,
     pub price: String,
     pub stock: i32,
+    pub unlimited: bool,
     pub disabled: bool,
     pub low: bool,
 }

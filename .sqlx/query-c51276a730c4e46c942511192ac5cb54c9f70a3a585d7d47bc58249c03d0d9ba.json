@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT COUNT(*) AS \"product_count!\", COUNT(*) FILTER (WHERE stock = 0) AS \"sold_out_count!\"\n           FROM products WHERE active",
+  "query": "SELECT COUNT(*) AS \"product_count!\", COUNT(*) FILTER (WHERE stock = 0 AND NOT unlimited) AS \"sold_out_count!\"\n           FROM products WHERE active",
   "describe": {
     "columns": [
       {
@@ -24,5 +24,5 @@
       null
     ]
   },
-  "hash": "7d4822c3598313b344e3ff36d542b6909a4dcddf0302ca281f6cb660d175b760"
+  "hash": "c51276a730c4e46c942511192ac5cb54c9f70a3a585d7d47bc58249c03d0d9ba"
 }

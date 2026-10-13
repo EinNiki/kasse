@@ -8,6 +8,9 @@ pub struct CartLine {
     pub quantity: i32,
 }
 
+/// Cap per product for products without a stock limit.
+pub const UNLIMITED_CART_MAX: i32 = 999;
+
 /// Adds one unit, but never more than `max_stock`.
 pub fn add(lines: &mut Vec<CartLine>, product_id: i64, max_stock: i32) {
     match lines.iter_mut().find(|l| l.product_id == product_id) {

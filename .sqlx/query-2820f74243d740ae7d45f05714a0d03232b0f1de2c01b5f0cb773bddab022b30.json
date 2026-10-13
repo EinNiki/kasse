@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT p.id, p.category_id, c.name AS \"category_name?\", p.name, p.price_cents, p.stock\n           FROM products p LEFT JOIN categories c ON c.id = p.category_id\n           WHERE p.active AND p.name ILIKE $1 ESCAPE '\\' AND ($2::bigint IS NULL OR p.category_id = $2)\n           ORDER BY CASE WHEN p.name ILIKE $3 ESCAPE '\\' THEN 0\n                         WHEN p.name ILIKE $4 ESCAPE '\\' THEN 1\n                         ELSE 2 END,\n                    c.sort_order NULLS LAST, p.name",
+  "query": "SELECT p.id, p.category_id, c.name AS \"category_name?\", p.name, p.price_cents, p.stock, p.unlimited\n           FROM products p LEFT JOIN categories c ON c.id = p.category_id\n           WHERE p.active AND p.name ILIKE $1 ESCAPE '\\' AND ($2::bigint IS NULL OR p.category_id = $2)\n           ORDER BY CASE WHEN p.name ILIKE $3 ESCAPE '\\' THEN 0\n                         WHEN p.name ILIKE $4 ESCAPE '\\' THEN 1\n                         ELSE 2 END,\n                    c.sort_order NULLS LAST, p.name",
   "describe": {
     "columns": [
       {
@@ -68,6 +68,17 @@
             "name": "stock"
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "unlimited",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "unlimited"
+          }
+        }
       }
     ],
     "parameters": {
@@ -84,8 +95,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "4bc6d9152f272e90568f11e57e884ffa19ca182eed986232bcd9323f8572ff16"
+  "hash": "2820f74243d740ae7d45f05714a0d03232b0f1de2c01b5f0cb773bddab022b30"
 }

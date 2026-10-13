@@ -84,7 +84,7 @@ async fn app_role_can_work_but_not_rewrite_history_or_change_the_schema(pool: Pg
     .await
     .unwrap();
     assert_eq!(receipt.total_cents, 600);
-    db::products::update(&app, f.beer, f.category_id, "Bier neu", 350)
+    db::products::update(&app, f.beer, f.category_id, "Bier neu", 350, false)
         .await
         .unwrap();
     db::products::soft_delete(&app, f.cola).await.unwrap();

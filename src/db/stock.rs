@@ -10,6 +10,8 @@ pub enum StockError {
     InvalidQuantity,
     #[error("Das Produkt gibt es nicht (mehr).")]
     NotFound,
+    #[error("Dieses Produkt hat unbegrenzten Bestand, hier gibt es nichts zu buchen.")]
+    Unlimited,
     #[error("Es sind nur {available} auf Lager, {requested} lassen sich nicht entfernen.")]
     Insufficient { available: i32, requested: i32 },
     #[error("database error: {0}")]
@@ -31,13 +33,17 @@ pub async fn adjust(
         return Err(StockError::InvalidQuantity);
     }
     let mut tx = pool.begin().await?;
-    let current = sqlx::query_scalar!(
-        "SELECT stock FROM products WHERE id = $1 AND active FOR UPDATE",
+    let product = sqlx::query!(
+        "SELECT stock, unlimited FROM products WHERE id = $1 AND active FOR UPDATE",
         product_id
     )
     .fetch_optional(&mut *tx)
     .await?
     .ok_or(StockError::NotFound)?;
+    if product.unlimited {
+        return Err(StockError::Unlimited);
+    }
+    let current = product.stock;
     let new_stock = match current.checked_add(delta) {
         Some(n) if n >= 0 => n,
         Some(_) => {

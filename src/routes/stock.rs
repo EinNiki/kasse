@@ -73,6 +73,7 @@ pub async fn index(
                 name: p.name,
                 category: p.category_name.unwrap_or_else(|| "–".to_string()),
                 stock: p.stock,
+                unlimited: p.unlimited,
                 price: format_eur(p.price_cents),
             })
             .collect(),
@@ -90,6 +91,8 @@ pub struct ProductForm {
     name: String,
     price: String,
     category_id: String,
+    /// Checkbox: present when ticked.
+    unlimited: Option<String>,
 }
 
 async fn product_form_page(
@@ -97,7 +100,7 @@ async fn product_form_page(
     user: &CurrentUser,
     action: String,
     heading: &str,
-    form: (&str, &str, Option<i64>),
+    form: (&str, &str, Option<i64>, bool),
     delete_url: Option<String>,
     error: Option<String>,
 ) -> Result<ProductFormTemplate, AppError> {
@@ -110,6 +113,7 @@ async fn product_form_page(
         heading: heading.to_string(),
         name: form.0.to_string(),
         price: form.1.to_string(),
+        unlimited: form.3,
         categories: options(categories, form.2),
         error,
         delete_url,
@@ -125,7 +129,7 @@ pub async fn new_form(
         &user,
         "/lager/produkte/neu".into(),
         "Neues Produkt",
-        ("", "", None),
+        ("", "", None, false),
         None,
         None,
     )
@@ -143,7 +147,16 @@ pub async fn new_submit(
     let result = match (parse_eur(&form.price), category) {
         (None, _) => Err(ProductError::InvalidPrice),
         (_, None) => Err(ProductError::InvalidCategory),
-        (Some(price), Some(cat)) => db::products::create(&state.pool, cat, &form.name, price).await,
+        (Some(price), Some(cat)) => {
+            db::products::create(
+                &state.pool,
+                cat,
+                &form.name,
+                price,
+                form.unlimited.is_some(),
+            )
+            .await
+        }
     };
     match result {
         Ok(_) => Ok(Redirect::to("/lager?hinweis=angelegt").into_response()),
@@ -154,7 +167,7 @@ pub async fn new_submit(
                 &user,
                 "/lager/produkte/neu".into(),
                 "Neues Produkt",
-                (&form.name, &form.price, category),
+                (&form.name, &form.price, category, form.unlimited.is_some()),
                 None,
                 Some(e.to_string()),
             )
@@ -178,7 +191,7 @@ pub async fn edit_form(
         &user,
         format!("/lager/produkte/{id}/bearbeiten"),
         "Produkt bearbeiten",
-        (&p.name, &price, p.category_id),
+        (&p.name, &price, p.category_id, p.unlimited),
         Some(format!("/lager/produkte/{id}/loeschen")),
         None,
     )
@@ -198,7 +211,15 @@ pub async fn edit_submit(
         (None, _) => Err(ProductError::InvalidPrice),
         (_, None) => Err(ProductError::InvalidCategory),
         (Some(price), Some(cat)) => {
-            db::products::update(&state.pool, id, cat, &form.name, price).await
+            db::products::update(
+                &state.pool,
+                id,
+                cat,
+                &form.name,
+                price,
+                form.unlimited.is_some(),
+            )
+            .await
         }
     };
     match result {
@@ -210,7 +231,7 @@ pub async fn edit_submit(
                 &user,
                 format!("/lager/produkte/{id}/bearbeiten"),
                 "Produkt bearbeiten",
-                (&form.name, &form.price, category),
+                (&form.name, &form.price, category, form.unlimited.is_some()),
                 Some(format!("/lager/produkte/{id}/loeschen")),
                 Some(e.to_string()),
             )
@@ -274,6 +295,9 @@ async fn stock_form_page(
     let p = db::products::get(&state.pool, id)
         .await?
         .ok_or_else(|| AppError::BadRequest("Das Produkt gibt es nicht (mehr).".into()))?;
+    if p.unlimited {
+        return Err(AppError::BadRequest(StockError::Unlimited.to_string()));
+    }
     Ok(StockFormTemplate {
         ctx: page_ctx(user),
         title: "Lager",
@@ -339,7 +363,9 @@ pub async fn stock_submit(
     match result {
         Ok(_) => Ok(Redirect::to("/lager?hinweis=bestand").into_response()),
         Err(StockError::Db(e)) => Err(e.into()),
-        Err(StockError::NotFound) => Err(AppError::BadRequest(StockError::NotFound.to_string())),
+        Err(e @ (StockError::NotFound | StockError::Unlimited)) => {
+            Err(AppError::BadRequest(e.to_string()))
+        }
         Err(e) => {
             let page = stock_form_page(
                 &state,

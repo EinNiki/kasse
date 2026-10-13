@@ -50,13 +50,14 @@ pub struct CartItem {
     pub unit_price_cents: i64,
     pub quantity: i32,
     pub stock: i32,
+    pub unlimited: bool,
 }
 
 /// Cart positions joined with current product data. Products that were deleted are skipped.
 pub async fn cart_items(pool: &PgPool, lines: &[CartLine]) -> Result<Vec<CartItem>, sqlx::Error> {
     let ids: Vec<i64> = lines.iter().map(|l| l.product_id).collect();
     let rows = sqlx::query!(
-        "SELECT id, name, price_cents, stock FROM products WHERE active AND id = ANY($1)",
+        "SELECT id, name, price_cents, stock, unlimited FROM products WHERE active AND id = ANY($1)",
         &ids
     )
     .fetch_all(pool)
@@ -71,6 +72,7 @@ pub async fn cart_items(pool: &PgPool, lines: &[CartLine]) -> Result<Vec<CartIte
                 unit_price_cents: p.price_cents,
                 quantity: l.quantity,
                 stock: p.stock,
+                unlimited: p.unlimited,
             })
         })
         .collect())
@@ -102,10 +104,11 @@ pub async fn checkout(
 
     let mut tx = pool.begin().await?;
     let mut items = Vec::with_capacity(wanted.len());
+    let mut unlimited_ids = std::collections::BTreeSet::new();
     let mut total: i64 = 0;
     for (&product_id, &quantity) in &wanted {
         let p = sqlx::query!(
-            "SELECT name, price_cents, stock, active FROM products WHERE id = $1 FOR UPDATE",
+            "SELECT name, price_cents, stock, unlimited, active FROM products WHERE id = $1 FOR UPDATE",
             product_id
         )
         .fetch_optional(&mut *tx)
@@ -115,7 +118,7 @@ pub async fn checkout(
             Some(p) => return Err(CheckoutError::UnknownProduct(p.name)),
             None => return Err(CheckoutError::UnknownProduct("Produkt".to_string())),
         };
-        if p.stock < quantity {
+        if !p.unlimited && p.stock < quantity {
             return Err(CheckoutError::Insufficient {
                 name: p.name,
                 available: p.stock,
@@ -133,6 +136,9 @@ pub async fn checkout(
             unit_price_cents: p.price_cents,
             quantity,
         });
+        if p.unlimited {
+            unlimited_ids.insert(product_id);
+        }
     }
 
     let Some(change) = change_cents(total, paid_cents) else {
@@ -165,6 +171,11 @@ pub async fn checkout(
         )
         .execute(&mut *tx)
         .await?;
+        // Unlimited products are never counted: no stock change and no movement, the sale itself
+        // is still recorded in sale_items.
+        if unlimited_ids.contains(&item.product_id) {
+            continue;
+        }
         sqlx::query!(
             "UPDATE products SET stock = stock - $2, updated_at = now() WHERE id = $1",
             item.product_id,

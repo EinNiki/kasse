@@ -151,8 +151,10 @@ async fn booking_flow_from_cart_to_confirmation(pool: PgPool) {
         .await
         .unwrap();
     let cat = db::categories::create(&pool, "Alkohol").await.unwrap();
-    let beer = db::products::create(&pool, cat, "Bier", 300).await.unwrap();
-    let empty = db::products::create(&pool, cat, "Radler", 300)
+    let beer = db::products::create(&pool, cat, "Bier", 300, false)
+        .await
+        .unwrap();
+    let empty = db::products::create(&pool, cat, "Radler", 300, false)
         .await
         .unwrap();
     db::stock::adjust(&pool, beer, 5, "Wareneingang", None, user)
@@ -287,7 +289,9 @@ async fn cart_stops_at_available_stock_and_checkout_rechecks(pool: PgPool) {
         .await
         .unwrap();
     let cat = db::categories::create(&pool, "Alkohol").await.unwrap();
-    let beer = db::products::create(&pool, cat, "Bier", 300).await.unwrap();
+    let beer = db::products::create(&pool, cat, "Bier", 300, false)
+        .await
+        .unwrap();
     db::stock::adjust(&pool, beer, 2, "Wareneingang", None, user)
         .await
         .unwrap();
@@ -321,7 +325,9 @@ async fn cart_stops_at_available_stock_and_checkout_rechecks(pool: PgPool) {
 async fn post_routes_require_a_valid_csrf_token(pool: PgPool) {
     let c = Client::login(pool.clone()).await;
     let cat = db::categories::create(&pool, "Alkohol").await.unwrap();
-    let beer = db::products::create(&pool, cat, "Bier", 300).await.unwrap();
+    let beer = db::products::create(&pool, cat, "Bier", 300, false)
+        .await
+        .unwrap();
 
     for uri in [
         format!("/buchen/warenkorb/{beer}/add"),

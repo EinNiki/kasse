@@ -23,7 +23,7 @@
           <span class="product-name">{{ t.name }}</span>
           <span class="product-meta">
             <span class="price">{{ t.price }}</span>
-            {% if t.stock == 0 %}<span class="badge warn">Ausverkauft</span>
+            {% if t.unlimited %}{% else if t.stock == 0 %}<span class="badge warn">Ausverkauft</span>
             {% else if t.disabled %}<span class="badge">Alle im Warenkorb</span>
             {% else if t.low %}<span class="badge">noch {{ t.stock }}</span>{% endif %}
           </span>

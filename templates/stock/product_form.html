@@ -17,6 +17,7 @@
       <label>Preis in Euro
         <input type="text" name="price" value="{{ price }}" inputmode="decimal" placeholder="z. B. 2,50" required>
       </label>
+      <label class="check"><input type="checkbox" name="unlimited" value="1" {% if unlimited %}checked{% endif %}> Unbegrenzt verfügbar (kein Bestand)</label>
       <div class="row">
         <a class="btn" href="/lager">Abbrechen</a>
         <button type="submit" class="btn primary">Speichern</button>

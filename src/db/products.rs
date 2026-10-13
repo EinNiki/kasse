@@ -7,6 +7,8 @@ pub struct ProductRow {
     pub name: String,
     pub price_cents: i64,
     pub stock: i32,
+    /// Never counted: can always be sold, stock is ignored.
+    pub unlimited: bool,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -61,7 +63,7 @@ pub async fn list(
     };
     sqlx::query_as!(
         ProductRow,
-        r#"SELECT p.id, p.category_id, c.name AS "category_name?", p.name, p.price_cents, p.stock
+        r#"SELECT p.id, p.category_id, c.name AS "category_name?", p.name, p.price_cents, p.stock, p.unlimited
            FROM products p LEFT JOIN categories c ON c.id = p.category_id
            WHERE p.active AND p.name ILIKE $1 ESCAPE '\' AND ($2::bigint IS NULL OR p.category_id = $2)
            ORDER BY CASE WHEN p.name ILIKE $3 ESCAPE '\' THEN 0
@@ -80,7 +82,7 @@ pub async fn list(
 pub async fn get(pool: &PgPool, id: i64) -> Result<Option<ProductRow>, sqlx::Error> {
     sqlx::query_as!(
         ProductRow,
-        r#"SELECT p.id, p.category_id, c.name AS "category_name?", p.name, p.price_cents, p.stock
+        r#"SELECT p.id, p.category_id, c.name AS "category_name?", p.name, p.price_cents, p.stock, p.unlimited
            FROM products p LEFT JOIN categories c ON c.id = p.category_id
            WHERE p.active AND p.id = $1"#,
         id
@@ -101,6 +103,7 @@ pub async fn create(
     category_id: i64,
     name: &str,
     price_cents: i64,
+    unlimited: bool,
 ) -> Result<i64, ProductError> {
     let name = clean_name(name)?;
     if price_cents < 0 {
@@ -108,10 +111,11 @@ pub async fn create(
     }
     check_category(pool, category_id).await?;
     Ok(sqlx::query_scalar!(
-        "INSERT INTO products (category_id, name, price_cents, stock) VALUES ($1, $2, $3, 0) RETURNING id",
+        "INSERT INTO products (category_id, name, price_cents, stock, unlimited) VALUES ($1, $2, $3, 0, $4) RETURNING id",
         category_id,
         name,
-        price_cents
+        price_cents,
+        unlimited
     )
     .fetch_one(pool)
     .await?)
@@ -124,6 +128,7 @@ pub async fn update(
     category_id: i64,
     name: &str,
     price_cents: i64,
+    unlimited: bool,
 ) -> Result<(), ProductError> {
     let name = clean_name(name)?;
     if price_cents < 0 {
@@ -131,12 +136,13 @@ pub async fn update(
     }
     check_category(pool, category_id).await?;
     let res = sqlx::query!(
-        "UPDATE products SET category_id = $2, name = $3, price_cents = $4, updated_at = now()
+        "UPDATE products SET category_id = $2, name = $3, price_cents = $4, unlimited = $5, updated_at = now()
          WHERE id = $1 AND active",
         id,
         category_id,
         name,
-        price_cents
+        price_cents,
+        unlimited
     )
     .execute(pool)
     .await?;

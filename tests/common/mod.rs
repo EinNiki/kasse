@@ -13,10 +13,10 @@ pub struct Fixture {
 pub async fn fixture(pool: &PgPool, beer_stock: i32) -> Fixture {
     let user_id = db::users::create(pool, "kasse", "hash").await.unwrap();
     let category_id = db::categories::create(pool, "Getränke").await.unwrap();
-    let beer = db::products::create(pool, category_id, "Bier", 300)
+    let beer = db::products::create(pool, category_id, "Bier", 300, false)
         .await
         .unwrap();
-    let cola = db::products::create(pool, category_id, "Cola", 200)
+    let cola = db::products::create(pool, category_id, "Cola", 200, false)
         .await
         .unwrap();
     if beer_stock > 0 {

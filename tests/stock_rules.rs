@@ -182,7 +182,7 @@ async fn price_change_only_affects_new_sales(pool: PgPool) {
     let old = checkout(&pool, f.user_id, &[line(f.beer, 1)], 300)
         .await
         .unwrap();
-    db::products::update(&pool, f.beer, f.category_id, "Bier neu", 450)
+    db::products::update(&pool, f.beer, f.category_id, "Bier neu", 450, false)
         .await
         .unwrap();
     let new = checkout(&pool, f.user_id, &[line(f.beer, 1)], 500)
@@ -356,7 +356,7 @@ async fn soft_deleted_products_vanish_from_lists_but_keep_history(pool: PgPool) 
 async fn product_search_and_category_filter(pool: PgPool) {
     let f = fixture(&pool, 0).await;
     let other = db::categories::create(&pool, "Kaffee").await.unwrap();
-    db::products::create(&pool, other, "Kaffee Pott 100%", 150)
+    db::products::create(&pool, other, "Kaffee Pott 100%", 150, false)
         .await
         .unwrap();
 
@@ -400,15 +400,15 @@ async fn product_validation(pool: PgPool) {
     let f = fixture(&pool, 0).await;
     use db::products::{create, ProductError};
     assert!(matches!(
-        create(&pool, f.category_id, "  ", 100).await,
+        create(&pool, f.category_id, "  ", 100, false).await,
         Err(ProductError::InvalidName)
     ));
     assert!(matches!(
-        create(&pool, f.category_id, "X", -1).await,
+        create(&pool, f.category_id, "X", -1, false).await,
         Err(ProductError::InvalidPrice)
     ));
     assert!(matches!(
-        create(&pool, 9999, "X", 100).await,
+        create(&pool, 9999, "X", 100, false).await,
         Err(ProductError::InvalidCategory)
     ));
 }
@@ -561,7 +561,7 @@ async fn statistics_aggregate_sales(pool: PgPool) {
 async fn search_puts_the_best_match_first(pool: PgPool) {
     let f = fixture(&pool, 0).await;
     for name in ["Weißbier 0,5 l", "Flasche Bier", "Bier hell"] {
-        db::products::create(&pool, f.category_id, name, 300)
+        db::products::create(&pool, f.category_id, name, 300, false)
             .await
             .unwrap();
     }
@@ -588,4 +588,92 @@ async fn search_puts_the_best_match_first(pool: PgPool) {
         db::products::list(&pool, None, None).await.unwrap().len(),
         5
     );
+}
+
+// ---------- Unlimited products ----------
+
+#[sqlx::test]
+async fn unlimited_product_sells_without_stock_and_is_not_counted(pool: PgPool) {
+    let f = fixture(&pool, 0).await;
+    let water = db::products::create(&pool, f.category_id, "Leitungswasser", 100, true)
+        .await
+        .unwrap();
+    let movements_before = count(&pool, "stock_movements").await;
+
+    // stock is 0, selling still works, even many units at once
+    let receipt = checkout(&pool, f.user_id, &[line(water, 50)], 5000)
+        .await
+        .unwrap();
+    assert_eq!(receipt.total_cents, 5000);
+    assert_eq!(
+        stock_of(&pool, water).await,
+        0,
+        "stock must not go negative"
+    );
+    assert_eq!(
+        count(&pool, "sale_items").await,
+        1,
+        "the sale is still recorded"
+    );
+    assert_eq!(
+        count(&pool, "stock_movements").await,
+        movements_before,
+        "no movement for uncounted products"
+    );
+}
+
+#[sqlx::test]
+async fn limited_and_unlimited_products_can_share_a_sale(pool: PgPool) {
+    let f = fixture(&pool, 2).await;
+    let water = db::products::create(&pool, f.category_id, "Leitungswasser", 100, true)
+        .await
+        .unwrap();
+    checkout(&pool, f.user_id, &[line(f.beer, 2), line(water, 3)], 2000)
+        .await
+        .unwrap();
+    assert_eq!(stock_of(&pool, f.beer).await, 0);
+
+    // the counted product is still protected
+    let err = checkout(&pool, f.user_id, &[line(f.beer, 1), line(water, 1)], 2000)
+        .await
+        .unwrap_err();
+    assert!(matches!(err, CheckoutError::Insufficient { .. }), "{err:?}");
+}
+
+#[sqlx::test]
+async fn stock_cannot_be_booked_on_an_unlimited_product(pool: PgPool) {
+    let f = fixture(&pool, 0).await;
+    let water = db::products::create(&pool, f.category_id, "Leitungswasser", 100, true)
+        .await
+        .unwrap();
+    let err = adjust(&pool, water, 5, REASON_RECEIPT, None, f.user_id)
+        .await
+        .unwrap_err();
+    assert!(matches!(err, StockError::Unlimited), "{err:?}");
+}
+
+#[sqlx::test]
+async fn product_can_be_switched_to_unlimited_and_back(pool: PgPool) {
+    let f = fixture(&pool, 1).await;
+    db::products::update(&pool, f.beer, f.category_id, "Bier", 300, true)
+        .await
+        .unwrap();
+    assert!(
+        db::products::get(&pool, f.beer)
+            .await
+            .unwrap()
+            .unwrap()
+            .unlimited
+    );
+    checkout(&pool, f.user_id, &[line(f.beer, 5)], 2000)
+        .await
+        .unwrap();
+
+    db::products::update(&pool, f.beer, f.category_id, "Bier", 300, false)
+        .await
+        .unwrap();
+    let err = checkout(&pool, f.user_id, &[line(f.beer, 5)], 2000)
+        .await
+        .unwrap_err();
+    assert!(matches!(err, CheckoutError::Insufficient { .. }), "{err:?}");
 }

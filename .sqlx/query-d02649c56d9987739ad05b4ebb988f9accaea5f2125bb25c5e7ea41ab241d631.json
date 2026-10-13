@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, price_cents, stock FROM products WHERE active AND id = ANY($1)",
+  "query": "SELECT id, name, price_cents, stock, unlimited FROM products WHERE active AND id = ANY($1)",
   "describe": {
     "columns": [
       {
@@ -46,6 +46,17 @@
             "name": "stock"
           }
         }
+      },
+      {
+        "ordinal": 4,
+        "name": "unlimited",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "unlimited"
+          }
+        }
       }
     ],
     "parameters": {
@@ -57,8 +68,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "c4cf17ceabeb2e69b6ff30f2ef0a1c596852e069846de19ce3497225c4403869"
+  "hash": "d02649c56d9987739ad05b4ebb988f9accaea5f2125bb25c5e7ea41ab241d631"
 }

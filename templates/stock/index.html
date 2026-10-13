@@ -28,10 +28,10 @@
         <tr id="p-{{ p.id }}">
           <td data-label="Name">{{ p.name }}</td>
           <td data-label="Kategorie" class="muted">{{ p.category }}</td>
-          <td data-label="Bestand" class="num">{% if p.stock == 0 %}<span class="badge warn">0</span>{% else %}{{ p.stock }}{% endif %}</td>
+          <td data-label="Bestand" class="num">{% if p.unlimited %}<span class="badge">unbegrenzt</span>{% else if p.stock == 0 %}<span class="badge warn">0</span>{% else %}{{ p.stock }}{% endif %}</td>
           <td data-label="Preis" class="num">{{ p.price }}</td>
           <td data-label="Aktionen" class="actions">
-            <a class="btn small" href="/lager/produkte/{{ p.id }}/bestand">Bestand</a>
+            {% if !p.unlimited %}<a class="btn small" href="/lager/produkte/{{ p.id }}/bestand">Bestand</a>{% endif %}
             <a class="btn small" href="/lager/produkte/{{ p.id }}/bearbeiten">Bearbeiten</a>
           </td>
         </tr>

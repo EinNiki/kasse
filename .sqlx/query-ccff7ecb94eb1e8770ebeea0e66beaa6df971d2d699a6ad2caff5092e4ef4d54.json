@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE products SET category_id = $2, name = $3, price_cents = $4, unlimited = $5, updated_at = now()\n         WHERE id = $1 AND active",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text",
+        "Int8",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ccff7ecb94eb1e8770ebeea0e66beaa6df971d2d699a6ad2caff5092e4ef4d54"
+}
