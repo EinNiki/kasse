@@ -345,15 +345,14 @@ td.actions .btn + .btn { margin-left: var(--space); }
 .shop-tools {
   position: sticky; top: calc(var(--topbar-h) - 1px); z-index: 20;
   /* reaches to the edges of the work area and has a soft lower edge, so scrolling tiles disappear behind it cleanly */
-  margin: calc(var(--space) * -1) calc(var(--space) * -3) 0 calc(var(--space) * -4);
-  padding: var(--space) calc(var(--space) * 3) calc(var(--space) * 1.5) calc(var(--space) * 4);
-  background: var(--background); border-bottom: 1px solid var(--border); box-shadow: 0 8px 8px -10px rgba(45, 58, 49, 0.35);
+  margin: 0 calc(var(--space) * -3) 0 calc(var(--space) * -4);
+  padding: calc(var(--space) * 2) calc(var(--space) * 3) calc(var(--space) * 1.5) calc(var(--space) * 4);
+  /* translucent and blurred, so the background pattern shows through and tiles still vanish cleanly */
+  background: color-mix(in srgb, var(--background) 80%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); box-shadow: 0 8px 8px -10px rgba(45, 58, 49, 0.35);
 }
 /* The tiles start clearly below the divider line instead of touching it. */
 .shop-main > .products { padding-top: calc(var(--space) * 2.5); }
 .shop-tools .chips { margin-bottom: 0; }
-/* The decorative background shapes would show through the bar edges: the work screen is plain. */
-body:has(.shop)::before { display: none; }
 
 /* Forgiving taps: the clickable area reaches half-way into the gap to the neighbour, so a tap
    slightly beside a button still hits the nearest one instead of nothing. */
@@ -444,6 +443,10 @@ body:has(.shop)::before { display: none; }
 
 html:active-view-transition-type(page)::view-transition-old(root) { animation: vt-out 180ms ease-in both; mix-blend-mode: normal; }
 html:active-view-transition-type(page)::view-transition-new(root) { animation: vt-in 460ms var(--ease-apple) 60ms both; mix-blend-mode: normal; }
+
+/* Lager tabs: a very light fade with a barely visible rise. */
+#lager-body { transition: opacity 240ms var(--ease-apple), transform 240ms var(--ease-apple); }
+#lager-body.htmx-added { opacity: 0; transform: translateY(3px); }
 
 /* Live updates are morphed in place (idiomorph): unchanged elements are never touched, changed
    text and classes update where they are and CSS transitions animate the difference.
@@ -628,7 +631,7 @@ html:active-view-transition-type(page)::view-transition-new(root) { animation: v
 
   /* shop: search and categories in two compact lines, categories scroll sideways */
   .shop { padding-top: 0; }
-  .shop-tools { margin: 0 calc(var(--space) * -1); padding: var(--space) var(--space) 8px; }
+  .shop-tools { margin: 0 calc(var(--space) * -1); padding: calc(var(--space) * 1.5) var(--space) 8px; }
   .shop-search { margin-bottom: 6px; }
   .shop-search input { min-height: 44px; }
   .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-left: calc(var(--space) * -1); margin-right: calc(var(--space) * -1); padding: 0 var(--space); }
