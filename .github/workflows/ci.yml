@@ -106,7 +106,7 @@ jobs:
           POSTGRES_DB=kasse
           APP_DB_USER=kasse_app
           ENV
-          docker compose up -d --pull never
+          docker compose up -d --pull missing
           for _ in $(seq 1 40); do
             code=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:8080/login || true)
             [ "$code" = "200" ] && break
