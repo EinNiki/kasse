@@ -28,7 +28,7 @@ Zertifikat der Tablets einrichten: siehe „Verschlüsselung“ (Befehl dort: `d
 1. **Test:** `cargo fmt --check`, `cargo clippy -D warnings`, alle Tests gegen eine echte PostgreSQL-Datenbank. Die SQL-Abfragen werden gegen den
    eingecheckten Cache `.sqlx/` geprüft; vergessene `cargo sqlx prepare` lässt den Bau scheitern.
 2. **Image:** Docker-Image bauen und mit der Fertig-Compose-Datei starten (Rauchtest: HTTPS, Sicherheits-Header, Weiterleitung, eingeschränkte DB-Rolle).
-3. **Veröffentlichen** (nicht bei Pull Requests): Multi-Arch-Image (amd64 und arm64, läuft also auch auf einem Raspberry Pi) nach `ghcr.io`.
+3. **Veröffentlichen** (nicht bei Pull Requests): Image für x86_64 (amd64) nach `ghcr.io`.
 4. **Release** (bei Tags `v*`): GitHub-Release mit `docker-compose.yml` (Image-Version fest eingetragen), `.env.example` und `setup.sh`.
 
 Dazu prüft ein Audit-Job die Abhängigkeiten (blockiert nicht), und Dependabot schlägt wöchentlich Updates vor.
