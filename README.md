@@ -35,7 +35,9 @@ Einmalig nötig: Unter *GitHub → Packages → kasse → Package settings* die 
 ```sh
 cp .env.example .env      # ALLE Passwörter ändern
 chmod 600 .env
-docker compose up -d --build
+docker compose up -d        # zieht das fertige Image von ghcr.io/einniki/kasse:dev
+# eigenen Quellcode bauen statt das Image zu ziehen:
+# docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 Danach ist die App unter **<http://localhost:8080>** erreichbar (Port über `APP_PORT` in `.env`).

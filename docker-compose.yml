@@ -19,7 +19,7 @@ services:
       retries: 10
 
   app:
-    build: .
+    image: ${KASSE_IMAGE:-ghcr.io/einniki/kasse:dev}
     restart: unless-stopped
     depends_on:
       db:

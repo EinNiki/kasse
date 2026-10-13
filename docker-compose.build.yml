@@ -1,0 +1,5 @@
+# Only for development: build the image from the local source instead of pulling it.
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+services:
+  app:
+    build: .
