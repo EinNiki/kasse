@@ -4,18 +4,31 @@ Kassen- und Lagerverwaltung für Theke/Kiosk. Rust (Axum), PostgreSQL (sqlx, Mig
 askama-Templates, eine handgeschriebene CSS-Datei, htmx (mit Idiomorph) für Live-Suche, Warenkorb-Klicks und Umschalten ohne Neuladen. Oberfläche auf Deutsch,
 ausgelegt für Tablets im Querformat. Als Datenbank wird ausschließlich PostgreSQL verwendet.
 
-## Fertige Installation ohne Quellcode
+## Installation
 
-Für den Einsatz reicht **eine Datei**: `deploy/docker-compose.yml` (oder die aus dem jeweiligen GitHub-Release). Das Image ist nur etwa 11 MB groß (statisches
-Binary ohne Betriebssystem), wird bei jedem Push automatisch gebaut (GitHub Actions) und liegt unter `ghcr.io/einniki/kasse`. Es gibt keinen
-Setup-Befehl und keinen eingebauten Proxy: HTTPS übernimmt dein Reverse Proxy (zum Beispiel Nginx Proxy Manager).
+Für den Einsatz reichen zwei Dateien: `docker-compose.yml` und `.env.example` (auch als Anhang jedes GitHub-Releases). Das Image wird bei jedem Push automatisch gebaut,
+liegt unter `ghcr.io/einniki/kasse` und ist nur etwa 11 MB groß (statisches Binary ohne Betriebssystem). Einen eingebauten Proxy gibt es nicht:
+HTTPS übernimmt dein Reverse Proxy (zum Beispiel Nginx Proxy Manager).
 
-1. In der Datei die drei Passwörter ändern (`change-me-db` kommt zweimal vor, `change-me-app`, `change-me-admin`). Solange noch ein `change-me…` drinsteht, startet die App nicht.
-2. `docker compose up -d`
-3. Im Nginx Proxy Manager einen Proxy-Host anlegen: Weiterleitung an `http://<Rechner>:8080`, SSL-Zertifikat und „Force SSL“ aktivieren.
-4. Adresse öffnen, Anmeldung mit `admin` und dem gesetzten Admin-Passwort.
+```sh
+cp .env.example .env      # ALLE Passwörter ändern (die App startet nicht mit „change-me…“)
+chmod 600 .env
+docker compose up -d
+```
 
-Aktualisieren: `docker compose pull && docker compose up -d`. Das Image gibt es als `:latest` (Hauptzweig), `:dev` (Entwicklung) und als Versionen (`:1.0.0`).
+1. Im Reverse Proxy einen Host anlegen: Weiterleitung an `http://<Rechner>:8080` (Port über `APP_PORT`), SSL-Zertifikat, „Force SSL“.
+2. Adresse öffnen, Anmeldung mit `ADMIN_USER` und `ADMIN_PASSWORD` aus der `.env`.
+
+Aktualisieren: `docker compose pull && docker compose up -d`. Welche Version läuft, steht in `KASSE_VERSION` (`dev`, `latest` oder eine Version wie `1.0.0`).
+Stoppen: `docker compose down` (Daten bleiben im Volume `pgdata`), `docker compose down -v` löscht auch alle Daten.
+
+Beim ersten Start passiert automatisch:
+1. Migrationen laufen (`migrations/`).
+2. Die Datenbankrolle der App (`APP_DB_USER`) wird mit eingeschränkten Rechten angelegt, siehe „Datenbank-Sicherheit“.
+3. Der Admin wird aus `ADMIN_USER` / `ADMIN_PASSWORD` angelegt, aber nur, wenn noch kein Benutzer existiert.
+4. Die Getränkeliste (28 Produkte in den Kategorien „Alkohol“ und „Nicht-Alkohol“, Bestand 0) wird einmalig angelegt.
+
+Eigenen Quellcode statt des Images bauen: `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`.
 
 ## Automatischer Bau (GitHub Actions)
 
@@ -23,60 +36,23 @@ Aktualisieren: `docker compose pull && docker compose up -d`. Das Image gibt es 
 
 1. **Test:** `cargo fmt --check`, `cargo clippy -D warnings`, alle Tests gegen eine echte PostgreSQL-Datenbank. Die SQL-Abfragen werden gegen den
    eingecheckten Cache `.sqlx/` geprüft; vergessene `cargo sqlx prepare` lässt den Bau scheitern.
-2. **Image:** Docker-Image bauen und mit der Fertig-Compose-Datei starten (Rauchtest: Login-Seite, Sicherheits-Header, eingeschränkte DB-Rolle).
+2. **Image:** Docker-Image bauen und mit der Compose-Datei starten (Rauchtest: Login-Seite, Sicherheits-Header, eingeschränkte DB-Rolle).
 3. **Veröffentlichen** (nicht bei Pull Requests): Image für x86_64 (amd64) nach `ghcr.io`.
-4. **Release** (bei Tags `v*`): GitHub-Release mit `docker-compose.yml` (Image-Version fest eingetragen).
+4. **Release** (bei Tags `v*`): GitHub-Release mit `docker-compose.yml` und `.env.example` (Image-Version fest eingetragen).
 
 Dazu prüft ein Audit-Job die Abhängigkeiten (blockiert nicht), und Dependabot schlägt wöchentlich Updates vor.
 Einmalig nötig: Unter *GitHub → Packages → kasse → Package settings* die Sichtbarkeit auf **Public** stellen, sonst braucht `docker compose pull` eine Anmeldung.
 
-## Start (aus dem Quellcode)
-
-```sh
-cp .env.example .env      # ALLE Passwörter ändern
-chmod 600 .env
-docker compose up -d        # zieht das fertige Image von ghcr.io/einniki/kasse:dev
-# eigenen Quellcode bauen statt das Image zu ziehen:
-# docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
-```
-
-Danach ist die App unter **<http://localhost:8080>** erreichbar (Port über `APP_PORT` in `.env`).
-Von anderen Geräten im Netz: `http://<IP-des-Rechners>:8080`.
-
-Beim ersten Start passiert automatisch:
-1. Migrationen laufen (`migrations/`).
-2. Die Datenbankrolle der App (`APP_DB_USER`) wird mit eingeschränkten Rechten angelegt, siehe Abschnitt „Datenbank-Sicherheit“.
-2. Der Admin wird aus `ADMIN_USER` / `ADMIN_PASSWORD` angelegt, aber nur, wenn noch kein Benutzer existiert. Platzhalter-Passwörter aus `.env.example` werden abgelehnt.
-3. Die Getränkeliste (28 Produkte in den Kategorien „Alkohol“ und „Nicht-Alkohol“, Bestand 0) wird einmalig angelegt.
-
-Stoppen: `docker compose down` (Daten bleiben im Volume `pgdata`). `docker compose down -v` löscht auch alle Daten.
-
 ## Verschlüsselung (HTTPS)
 
-Die Entwicklungs-Compose-Datei im Hauptordner enthält einen Caddy-Proxy mit eigener Zertifizierungsstelle; die Fertig-Installation (oben) nutzt stattdessen deinen eigenen Proxy. Die App spricht nur über einen vorgeschalteten HTTPS-Proxy (Caddy, TLS 1.2/1.3). Die App selbst ist von außen nicht erreichbar, und die
-Sitzungs-Cookies sind `Secure`. Passwörter und Buchungen laufen also nie unverschlüsselt durchs WLAN.
-
-Weil im lokalen Netz keine öffentliche Zertifizierungsstelle ein Zertifikat ausstellt, erzeugt der Proxy eine eigene. Damit die Browser
-keine Warnung mehr zeigen, muss jedes Gerät dieser Zertifizierungsstelle **einmalig** vertrauen:
-
-```sh
-./scripts/export-ca.sh        # schreibt kasse-root-ca.crt (nur das öffentliche Zertifikat)
-```
-
-- **iPhone/iPad:** Datei übertragen (AirDrop/Mail), öffnen, „Profil laden“, dann *Einstellungen → Allgemein → Info → Zertifikatsvertrauenseinstellungen* aktivieren.
-- **Android:** *Einstellungen → Sicherheit → Weitere Einstellungen → Verschlüsselung & Anmeldedaten → Zertifikat installieren → CA-Zertifikat*.
-- **Windows:** Doppelklick, *Zertifikat installieren → Lokaler Computer → Vertrauenswürdige Stammzertifizierungsstellen*.
-- **macOS:** Doppelklick, im Schlüsselbund auf „Immer vertrauen“ stellen.
-- **Firefox** hat einen eigenen Speicher: *Einstellungen → Datenschutz & Sicherheit → Zertifikate → Zertifikate anzeigen → Importieren*.
-
-Ändert sich die Adresse (neue IP), `SITE_ADDRESS` in `.env` anpassen und `docker compose up -d` ausführen. Die Zertifizierungsstelle bleibt im Volume
-`caddy_data` erhalten, die Geräte müssen nichts neu installieren. Mit `docker compose down -v` geht sie verloren.
+Die App spricht selbst nur HTTP und gehört hinter einen HTTPS-Proxy. Die Sitzungs-Cookies sind `Secure` (`COOKIE_SECURE=true`) und die App setzt
+HSTS, sobald der Proxy `X-Forwarded-Proto: https` mitschickt (Nginx Proxy Manager tut das). Den Port 8080 nicht ins Internet freigeben.
 
 ## Bedienung
 
 | Bereich | Was geht |
 |---|---|
-| **Buchen / Bestellen** | Kategorie wählen (oder „Alle“), Suche und Kategorie-Filter, Die Suche ist live: schon beim Tippen erscheinen die Treffer, der beste (Name beginnt mit dem Suchbegriff) zuerst. Produktkachel antippen legt sie in den Warenkorb (rechts). Warenkorb mit +/−, Entfernen und Summe. Ausverkaufte Produkte sind sichtbar, aber gesperrt. „Abbuchen“: Betrag unter „Gegeben“ eintippen (oder Schnellbetrag wählen), das Rückgeld erscheint sofort. Danach Bestätigung mit Summe und Rückgeld. |
+| **Buchen / Bestellen** | Kategorie wählen (oder „Alle“), Suche und Kategorie-Filter, Die Suche ist live: schon beim Tippen erscheinen die Treffer, der beste (Name beginnt mit dem Suchbegriff) zuerst. Produktkachel antippen legt sie in den Warenkorb (rechts). Warenkorb mit +/−, Entfernen und Summe. Ausverkaufte Produkte sind sichtbar, aber gesperrt. Produkte können auf „unbegrenzt“ gesetzt werden (kein Bestand, immer verkäuflich). „Abbuchen“: Betrag unter „Gegeben“ eintippen (oder Schnellbetrag wählen), das Rückgeld erscheint sofort. Danach Bestätigung mit Summe und Rückgeld. |
 | **Lager** | Produkte mit Live-Suche und Kategorie-Filter. Anlegen, Bearbeiten, Löschen (Soft-Delete, Verkäufe bleiben erhalten). Bestand „Hinzufügen“ (Wareneingang) und „Entfernen“ (Korrektur) mit Menge und Kommentar. Reiter „Bewegungen“ zeigt das Protokoll, Reiter „Kategorien“ legt Kategorien an, benennt um und löscht (nur leere). |
 | **Admin** (nur für Admins sichtbar) | Benutzer anlegen (optional als Admin), Passwort setzen, Admin-Rechte vergeben oder entziehen, Benutzer deaktivieren oder wieder aktivieren (Benutzer mit Verkäufen werden nie gelöscht, damit die Historie erhalten bleibt). Man kann sich weder selbst deaktivieren noch die eigenen Admin-Rechte entziehen, damit immer ein Admin übrig bleibt. |
 | **Statistik** | Umsatz heute, Woche, Monat. Für einen frei wählbaren Zeitraum: Umsatz, Anzahl Verkäufe, Ø je Verkauf, Top-Produkte nach Menge und Umsatz, Umsatz pro Kategorie, letzte Verkäufe mit Uhrzeit. Tagesgrenzen gelten in deutscher Zeit (Europe/Berlin). |
@@ -132,7 +108,7 @@ Soft-Delete, Kategorie-Regeln, Seed, Statistik sowie den kompletten Ablauf über
 - **Integrität in der DB:** CHECK-Constraints (Bestand ≥ 0, Preise ≥ 0, Menge > 0, Gegeben ≥ Summe), Fremdschlüssel, Benutzer- und Kategorienamen
   eindeutig ohne Beachtung der Groß-/Kleinschreibung.
 - **Container:** App läuft ohne Root, mit schreibgeschütztem Dateisystem, ohne Linux-Capabilities und `no-new-privileges`.
-- **Verbindung:** Nur HTTPS, HSTS, Cookies `Secure`/`HttpOnly`/`SameSite=Lax`. Antworten tragen Content-Security-Policy (nur eigene Dateien, keine Inline-Skripte), `X-Frame-Options: DENY`, `nosniff`; dynamische Seiten sind `no-store`.
+- **Verbindung:** Hinter einem HTTPS-Proxy, HSTS, Cookies `Secure`/`HttpOnly`/`SameSite=Lax`. Antworten tragen Content-Security-Policy (nur eigene Dateien, keine Inline-Skripte), `X-Frame-Options: DENY`, `nosniff`; dynamische Seiten sind `no-store`.
 - **Zugangsdaten:** Nur in `.env` (`chmod 600`, nicht im Repo). Die Platzhalter aus `.env.example` werden von App und Compose abgelehnt bzw. verlangt.
 - **Sitzungen** liegen nur als SHA-256-Hash in der DB, Passwörter als argon2. Nach 5 falschen Anmeldungen wird der Benutzername 5 Minuten gesperrt.
 - **Backup:** `./scripts/backup.sh` schreibt einen komprimierten Dump nach `backups/` (nicht im Repo). Zurückspielen: siehe Kopf des Skripts.

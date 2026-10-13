@@ -91,17 +91,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Smoke test (the ready-made compose file starts and serves the login page)
-        working-directory: deploy
+      - name: Smoke test (the compose file starts and serves the login page)
+        env:
+          KASSE_VERSION: ci
         run: |
-          # use the image built above and real passwords instead of the placeholders
-          sed -i \
-            -e 's|ghcr.io/einniki/kasse:dev|kasse:ci|' \
-            -e "s|change-me-db|ci-db-$(openssl rand -hex 8)|g" \
-            -e "s|change-me-app|ci-app-$(openssl rand -hex 8)|" \
-            -e "s|change-me-admin|ci-admin-$(openssl rand -hex 8)|" \
-            docker-compose.yml
-          docker compose up -d
+          # the image built above is tagged kasse:ci, give it the name the compose file expects
+          docker tag kasse:ci ghcr.io/einniki/kasse:ci
+          cat > .env <<ENV
+          KASSE_VERSION=ci
+          POSTGRES_PASSWORD=ci-postgres-$(openssl rand -hex 8)
+          APP_DB_PASSWORD=ci-app-$(openssl rand -hex 8)
+          ADMIN_PASSWORD=ci-admin-$(openssl rand -hex 8)
+          POSTGRES_USER=kasse
+          POSTGRES_DB=kasse
+          APP_DB_USER=kasse_app
+          ENV
+          docker compose up -d --pull never
           for _ in $(seq 1 40); do
             code=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:8080/login || true)
             [ "$code" = "200" ] && break
@@ -145,9 +150,11 @@ jobs:
       - name: Pin the image version in the released compose file
         run: |
           mkdir -p dist
-          sed "s|ghcr.io/einniki/kasse:dev|ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_REF_NAME#v}|" deploy/docker-compose.yml > dist/docker-compose.yml
+          sed "s|KASSE_VERSION:-dev|KASSE_VERSION:-${GITHUB_REF_NAME#v}|" docker-compose.yml > dist/docker-compose.yml
+          sed "s|^KASSE_VERSION=.*|KASSE_VERSION=${GITHUB_REF_NAME#v}|" .env.example > dist/.env.example
       - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           files: |
             dist/docker-compose.yml
+            dist/.env.example
