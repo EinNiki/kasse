@@ -28,10 +28,10 @@ fn role_name(tag: &str) -> String {
 
 async fn drop_role(pool: &PgPool, role: &str) {
     // roles are cluster wide: clean up so test runs do not pile them up
-    let _ = sqlx::query(&format!("DROP OWNED BY {role}"))
+    let _ = sqlx::query(sqlx::AssertSqlSafe(format!("DROP OWNED BY {role}")))
         .execute(pool)
         .await;
-    let _ = sqlx::query(&format!("DROP ROLE IF EXISTS {role}"))
+    let _ = sqlx::query(sqlx::AssertSqlSafe(format!("DROP ROLE IF EXISTS {role}")))
         .execute(pool)
         .await;
 }

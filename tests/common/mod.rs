@@ -51,7 +51,8 @@ pub async fn stock_of(pool: &PgPool, product_id: i64) -> i32 {
 }
 
 pub async fn count(pool: &PgPool, table: &str) -> i64 {
-    sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
+    // test helper, table names are literals from the tests
+    sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {table}")))
         .fetch_one(pool)
         .await
         .unwrap()

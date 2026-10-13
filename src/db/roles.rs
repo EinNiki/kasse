@@ -53,7 +53,10 @@ pub async fn ensure_app_role(
     .bind(password)
     .fetch_one(owner)
     .await?;
-    sqlx::query(&create_or_alter).execute(owner).await?;
+    // the statement was assembled by PostgreSQL itself with format(%I, %L), which quotes identifiers and literals
+    sqlx::query(sqlx::AssertSqlSafe(create_or_alter))
+        .execute(owner)
+        .await?;
 
     let mut statements: Vec<String> = Vec::new();
     let db_grant: String = sqlx::query_scalar(
@@ -90,7 +93,10 @@ pub async fn ensure_app_role(
     }
     let mut tx = owner.begin().await?;
     for sql in &statements {
-        sqlx::query(sql).execute(&mut *tx).await?;
+        // built server-side with format(%I) from catalog values, see above
+        sqlx::query(sqlx::AssertSqlSafe(sql.as_str()))
+            .execute(&mut *tx)
+            .await?;
     }
     tx.commit().await
 }
