@@ -6,20 +6,16 @@ ausgelegt für Tablets im Querformat. Als Datenbank wird ausschließlich Postgre
 
 ## Fertige Installation ohne Quellcode
 
-Für den Einsatz reicht ein Ordner mit zwei Dateien. Das Docker-Image wird bei jedem Push automatisch gebaut (GitHub Actions) und liegt unter
-`ghcr.io/einniki/kasse`. Alle Passwörter lassen sich in der `.env` angeben (oder von `setup.sh` zufällig erzeugen):
+Für den Einsatz reicht **eine Datei**: `deploy/docker-compose.yml` (oder die aus dem jeweiligen GitHub-Release). Das Image ist nur etwa 11 MB groß (statisches
+Binary ohne Betriebssystem), wird bei jedem Push automatisch gebaut (GitHub Actions) und liegt unter `ghcr.io/einniki/kasse`. Es gibt keinen
+Setup-Befehl und keinen eingebauten Proxy: HTTPS übernimmt dein Reverse Proxy (zum Beispiel Nginx Proxy Manager).
 
-```sh
-mkdir kasse && cd kasse
-# die drei Dateien aus deploy/ (oder aus dem jeweiligen GitHub-Release) hierher kopieren:
-#   docker-compose.yml   .env.example   setup.sh
-./setup.sh 192.168.1.50       # legt .env mit starken Zufallspasswörtern an (Adresse = die der Tablets)
-docker compose up -d
-```
+1. In der Datei die drei Passwörter ändern (`change-me-db` kommt zweimal vor, `change-me-app`, `change-me-admin`). Solange noch ein `change-me…` drinsteht, startet die App nicht.
+2. `docker compose up -d`
+3. Im Nginx Proxy Manager einen Proxy-Host anlegen: Weiterleitung an `http://<Rechner>:8080`, SSL-Zertifikat und „Force SSL“ aktivieren.
+4. Adresse öffnen, Anmeldung mit `admin` und dem gesetzten Admin-Passwort.
 
-Danach `https://192.168.1.50:8443` öffnen, Anmeldung mit `admin` und dem von `setup.sh` ausgegebenen Passwort. Aktualisieren:
-`docker compose pull && docker compose up -d`. Das Image gibt es als `:latest` (Hauptzweig), `:dev` (Entwicklung) und als Versionen (`:1.0.0`).
-Zertifikat der Tablets einrichten: siehe „Verschlüsselung“ (Befehl dort: `docker compose cp proxy:/data/caddy/pki/authorities/local/root.crt .`).
+Aktualisieren: `docker compose pull && docker compose up -d`. Das Image gibt es als `:latest` (Hauptzweig), `:dev` (Entwicklung) und als Versionen (`:1.0.0`).
 
 ## Automatischer Bau (GitHub Actions)
 
@@ -27,9 +23,9 @@ Zertifikat der Tablets einrichten: siehe „Verschlüsselung“ (Befehl dort: `d
 
 1. **Test:** `cargo fmt --check`, `cargo clippy -D warnings`, alle Tests gegen eine echte PostgreSQL-Datenbank. Die SQL-Abfragen werden gegen den
    eingecheckten Cache `.sqlx/` geprüft; vergessene `cargo sqlx prepare` lässt den Bau scheitern.
-2. **Image:** Docker-Image bauen und mit der Fertig-Compose-Datei starten (Rauchtest: HTTPS, Sicherheits-Header, Weiterleitung, eingeschränkte DB-Rolle).
+2. **Image:** Docker-Image bauen und mit der Fertig-Compose-Datei starten (Rauchtest: Login-Seite, Sicherheits-Header, eingeschränkte DB-Rolle).
 3. **Veröffentlichen** (nicht bei Pull Requests): Image für x86_64 (amd64) nach `ghcr.io`.
-4. **Release** (bei Tags `v*`): GitHub-Release mit `docker-compose.yml` (Image-Version fest eingetragen), `.env.example` und `setup.sh`.
+4. **Release** (bei Tags `v*`): GitHub-Release mit `docker-compose.yml` (Image-Version fest eingetragen).
 
 Dazu prüft ein Audit-Job die Abhängigkeiten (blockiert nicht), und Dependabot schlägt wöchentlich Updates vor.
 Einmalig nötig: Unter *GitHub → Packages → kasse → Package settings* die Sichtbarkeit auf **Public** stellen, sonst braucht `docker compose pull` eine Anmeldung.
@@ -55,7 +51,7 @@ Stoppen: `docker compose down` (Daten bleiben im Volume `pgdata`). `docker compo
 
 ## Verschlüsselung (HTTPS)
 
-Die App spricht nur über einen vorgeschalteten HTTPS-Proxy (Caddy, TLS 1.2/1.3). Die App selbst ist von außen nicht erreichbar, und die
+Die Entwicklungs-Compose-Datei im Hauptordner enthält einen Caddy-Proxy mit eigener Zertifizierungsstelle; die Fertig-Installation (oben) nutzt stattdessen deinen eigenen Proxy. Die App spricht nur über einen vorgeschalteten HTTPS-Proxy (Caddy, TLS 1.2/1.3). Die App selbst ist von außen nicht erreichbar, und die
 Sitzungs-Cookies sind `Secure`. Passwörter und Buchungen laufen also nie unverschlüsselt durchs WLAN.
 
 Weil im lokalen Netz keine öffentliche Zertifizierungsstelle ein Zertifikat ausstellt, erzeugt der Proxy eine eigene. Damit die Browser

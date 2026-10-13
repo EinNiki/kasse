@@ -617,8 +617,8 @@ async fn unlimited_product_sells_without_stock_and_is_not_counted(pool: PgPool) 
     );
     assert_eq!(
         count(&pool, "stock_movements").await,
-        movements_before,
-        "no movement for uncounted products"
+        movements_before + 1,
+        "the sale shows up in the movement log"
     );
 }
 

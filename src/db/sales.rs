@@ -171,18 +171,17 @@ pub async fn checkout(
         )
         .execute(&mut *tx)
         .await?;
-        // Unlimited products are never counted: no stock change and no movement, the sale itself
-        // is still recorded in sale_items.
-        if unlimited_ids.contains(&item.product_id) {
-            continue;
+        // Unlimited products are never counted: the stock stays as it is, but the sale still
+        // shows up in the movement log.
+        if !unlimited_ids.contains(&item.product_id) {
+            sqlx::query!(
+                "UPDATE products SET stock = stock - $2, updated_at = now() WHERE id = $1",
+                item.product_id,
+                item.quantity
+            )
+            .execute(&mut *tx)
+            .await?;
         }
-        sqlx::query!(
-            "UPDATE products SET stock = stock - $2, updated_at = now() WHERE id = $1",
-            item.product_id,
-            item.quantity
-        )
-        .execute(&mut *tx)
-        .await?;
         sqlx::query!(
             "INSERT INTO stock_movements (product_id, delta, reason, comment, user_id) VALUES ($1, $2, $3, $4, $5)",
             item.product_id,

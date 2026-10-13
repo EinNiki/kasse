@@ -1,10 +1,11 @@
-# Kasse - ready-made installation. No source code and no build needed: the image comes from
-# GitHub Container Registry and is built automatically by the CI of this repository.
+# Kasse - ready-made installation: only this file is needed, nothing to build.
+# The image comes from GitHub Container Registry (built by the CI of this repository).
 #
-#   1. cp .env.example .env   (or run ./setup.sh, it creates .env with random passwords)
-#   2. edit .env: the passwords and SITE_ADDRESS (the address the tablets use)
-#   3. docker compose up -d
-#   4. open https://<SITE_ADDRESS>:8443 and log in with ADMIN_USER / ADMIN_PASSWORD
+#   1. Change the three passwords below (the app refuses to start while one still says "change-me").
+#   2. docker compose up -d
+#   3. In Nginx Proxy Manager add a proxy host that forwards to  http://<this host>:8080
+#      (or http://app:8080 when NPM shares a network with this stack), SSL certificate + "Force SSL".
+#   4. Open the address and log in with ADMIN_USER / ADMIN_PASSWORD.
 #
 # Update later:  docker compose pull && docker compose up -d
 services:
@@ -12,9 +13,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-kasse}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-kasse}
+      POSTGRES_USER: kasse
+      POSTGRES_PASSWORD: change-me-db # 1) must match the password in DATABASE_URL below
+      POSTGRES_DB: kasse
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -22,30 +23,31 @@ services:
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kasse} -d ${POSTGRES_DB:-kasse}"]
+      test: ["CMD-SHELL", "pg_isready -U kasse -d kasse"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   app:
-    image: ${KASSE_IMAGE:-ghcr.io/einniki/kasse:latest}
+    image: ghcr.io/einniki/kasse:dev # or a fixed version, e.g. ghcr.io/einniki/kasse:1.0.0
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-kasse}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-kasse}
+      DATABASE_URL: postgres://kasse:change-me-db@db:5432/kasse # password = POSTGRES_PASSWORD above
       # the app itself runs as this restricted role (created automatically, cannot change the schema)
-      APP_DB_USER: ${APP_DB_USER:-kasse_app}
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
-      ADMIN_USER: ${ADMIN_USER:-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
-      COOKIE_SECURE: "true"
+      APP_DB_USER: kasse_app
+      APP_DB_PASSWORD: change-me-app # 2)
+      # first login, created on the first start only
+      ADMIN_USER: admin
+      ADMIN_PASSWORD: change-me-admin # 3)
+      COOKIE_SECURE: "true" # the browser talks HTTPS to the reverse proxy
       RUST_LOG: kasse=info,tower_http=info
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080" # plain HTTP for the reverse proxy; do not expose it to the internet directly
     networks:
-      - edge
+      - default
       - backend
     read_only: true
     cap_drop:
@@ -53,64 +55,9 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  proxy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      - app
-    environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
-      SITE_ALIASES: ${SITE_ALIASES:-127.0.0.1}
-      HTTPS_PORT: ${HTTPS_PORT:-8443}
-      HTTP_PORT: ${HTTP_PORT:-8080}
-    ports:
-      - "${HTTPS_PORT:-8443}:${HTTPS_PORT:-8443}"
-      - "${HTTP_PORT:-8080}:${HTTP_PORT:-8080}" # plain HTTP, only redirects to HTTPS
-    configs:
-      - source: caddyfile
-        target: /etc/caddy/Caddyfile
-    volumes:
-      - caddy_data:/data # holds the local certificate authority: keep it, devices trust its root
-    networks:
-      - edge
-    # (no read_only here: Compose writes the inline Caddyfile into the container)
-    tmpfs:
-      - /config
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-    security_opt:
-      - no-new-privileges:true
-
-configs:
-  caddyfile:
-    content: |
-      {
-        local_certs
-        admin off
-        auto_https disable_redirects
-        https_port {$$HTTPS_PORT:8443}
-        http_port {$$HTTP_PORT:8080}
-        default_sni {$$SITE_ADDRESS:localhost}
-      }
-
-      http://:{$$HTTP_PORT:8080} {
-        redir https://{host}:{$$HTTPS_PORT:8443}{uri} permanent
-      }
-
-      {$$SITE_ADDRESS:localhost} {$$SITE_ALIASES:127.0.0.1} {
-        tls internal
-        encode zstd gzip
-        header -Server
-        reverse_proxy app:8080
-      }
-
 networks:
-  edge:
   backend:
     internal: true
 
 volumes:
   pgdata:
-  caddy_data:
