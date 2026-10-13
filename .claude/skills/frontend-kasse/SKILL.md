@@ -14,7 +14,7 @@ Auf der Kasse zählen trotzdem Tempo und Lesbarkeit: Dekoration darf nie die Bed
 - primary (Salbei) `#8C9A84` für Flächen, Rahmen, Icons. Für **Text** auf hellem Grund `#54634C` (Kontrast AA)
 - secondary (Ton) `#D3C4B4`, border `#D6D0C0`
 - interactive (Terrakotta) `#C27B66` für Hover und einzelne Akzente
-- Schatten weich, grün getönt (`rgba(45,58,49,…)`), als Variablen sm/md/lg/xl
+- Schatten weich, grün getönt (`rgba(45,58,49,…)`), als Variablen sm/md/xl
 - Radien: Karten 24 px, Buttons und Inputs Pille (`999px`), Bögen mit `border-radius: 200px 200px … …`
 
 ## Typografie

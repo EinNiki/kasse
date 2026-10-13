@@ -904,3 +904,57 @@ async fn oversized_request_bodies_are_rejected(pool: PgPool) {
     let res = c.post("/lager/kategorien", &[("name", &big)]).await;
     assert_eq!(res.status(), StatusCode::PAYLOAD_TOO_LARGE);
 }
+
+#[sqlx::test]
+async fn unlimited_checkbox_makes_a_product_always_available(pool: PgPool) {
+    let c = Client::login(pool.clone()).await;
+    let cat = db::categories::create(&pool, "Getränke").await.unwrap();
+    let cat_id = cat.to_string();
+    let res = c
+        .post(
+            "/lager/produkte/neu",
+            &[
+                ("name", "Leitungswasser"),
+                ("price", "1"),
+                ("category_id", &cat_id),
+                ("unlimited", "1"),
+            ],
+        )
+        .await;
+    assert_eq!(location(&res), "/lager?hinweis=angelegt");
+    let product = db::products::list(&pool, None, None)
+        .await
+        .unwrap()
+        .remove(0);
+    assert!(product.unlimited);
+
+    // stock 0, but the tile is neither sold out nor disabled, and the list shows the badge
+    let html = text(c.get("/buchen/alle").await).await;
+    assert!(html.contains("Leitungswasser") && !html.contains("Ausverkauft"));
+    assert!(
+        !html.contains("class=\"product\" disabled"),
+        "tile stays clickable"
+    );
+    assert!(text(c.get("/lager").await).await.contains("unbegrenzt"));
+
+    // many units can be put in the cart and booked
+    for _ in 0..3 {
+        c.post(
+            &format!("/buchen/warenkorb/{}/add", product.id),
+            &[("back", "/buchen/alle")],
+        )
+        .await;
+    }
+    let res = c.post("/buchen/abbuchen", &[("gegeben", "5")]).await;
+    assert_eq!(res.status(), StatusCode::SEE_OTHER);
+    assert_eq!(common::stock_of(&pool, product.id).await, 0);
+
+    // the UI offers no stock button for it; a hand-made request is refused
+    let res = c
+        .post(
+            &format!("/lager/produkte/{}/bestand", product.id),
+            &[("mode", "add"), ("quantity", "5")],
+        )
+        .await;
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+}
