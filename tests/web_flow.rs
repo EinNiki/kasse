@@ -226,17 +226,18 @@ async fn booking_flow_from_cart_to_confirmation(pool: PgPool) {
     // payment page and live change fragment
     let html = text(c.get("/buchen/abbuchen").await).await;
     assert!(html.contains("6,00 €") && html.contains("Gegeben") && html.contains("Passend"));
-    let frag = text(c.get("/buchen/rueckgeld?gegeben=10").await).await;
+    // typing re-requests the pay page with the amount; the change shows up in the same page
+    let frag = text(c.get("/buchen/abbuchen?gegeben=10").await).await;
     assert!(
         frag.contains("4,00 €") && frag.contains("Rückgeld"),
         "{frag}"
     );
-    let frag = text(c.get("/buchen/rueckgeld?gegeben=5").await).await;
+    let frag = text(c.get("/buchen/abbuchen?gegeben=5").await).await;
     assert!(
         frag.contains("Es fehlen") && frag.contains("1,00 €"),
         "{frag}"
     );
-    let frag = text(c.get("/buchen/rueckgeld?gegeben=6").await).await;
+    let frag = text(c.get("/buchen/abbuchen?gegeben=6").await).await;
     assert!(frag.contains("0,00 €"), "exact amount: {frag}");
 
     // too little money: 422, nothing booked, cart stays
@@ -769,7 +770,6 @@ async fn all_app_pages_require_login(pool: PgPool) {
         "/buchen",
         "/buchen/alle",
         "/buchen/abbuchen",
-        "/buchen/rueckgeld",
         "/buchen/fertig/1",
         "/statistik",
     ] {

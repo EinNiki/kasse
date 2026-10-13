@@ -62,8 +62,34 @@ async fn main() {
         .expect("cannot bind address");
     tracing::info!("listening on {bind}");
     axum::serve(listener, router(state))
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .expect("server error");
+    tracing::info!("stopped");
+}
+
+/// Resolves on SIGTERM (`docker stop`) or Ctrl-C. As process 1 of a container the app would
+/// otherwise ignore SIGTERM and be killed after 10 seconds; this lets running requests finish.
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        let _ = tokio::signal::ctrl_c().await;
+    };
+    #[cfg(unix)]
+    let terminate = async {
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            Ok(mut sig) => {
+                sig.recv().await;
+            }
+            Err(_) => std::future::pending::<()>().await,
+        }
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+    tokio::select! {
+        () = ctrl_c => {},
+        () = terminate => {},
+    }
+    tracing::info!("shutting down");
 }
 
 /// Pool for serving requests. With `APP_DB_USER`/`APP_DB_PASSWORD` the app runs as a restricted

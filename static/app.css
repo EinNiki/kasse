@@ -24,14 +24,12 @@
 
   --shadow-sm: 0 4px 6px -1px rgba(45, 58, 49, 0.05);
   --shadow-md: 0 10px 15px -3px rgba(45, 58, 49, 0.05);
-  --shadow-lg: 0 20px 40px -10px rgba(45, 58, 49, 0.08);
   --shadow-xl: 0 25px 50px -12px rgba(45, 58, 49, 0.15);
 
   --radius-card: 24px;
   --radius-pill: 999px;
   --space: 8px;
   --topbar-h: 81px;
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-apple: cubic-bezier(0.32, 0.72, 0, 1); /* iOS-like: quick start, long soft landing */
 
   --font-display: "Playfair Display", Georgia, serif;
@@ -439,8 +437,6 @@ td.actions .btn + .btn { margin-left: var(--space); }
 
 @keyframes vt-out { to { opacity: 0; transform: scale(1.012); } }
 @keyframes vt-in { from { opacity: 0; transform: scale(0.985) translateY(8px); } }
-@keyframes vt-fade-out { to { opacity: 0; } }
-@keyframes vt-fade-in { from { opacity: 0; } }
 
 html:active-view-transition-type(page)::view-transition-old(root) { animation: vt-out 180ms ease-in both; mix-blend-mode: normal; }
 html:active-view-transition-type(page)::view-transition-new(root) { animation: vt-in 460ms var(--ease-apple) 60ms both; mix-blend-mode: normal; }

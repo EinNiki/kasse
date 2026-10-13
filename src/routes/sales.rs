@@ -135,7 +135,6 @@ pub async fn shop(
             .collect(),
         total: format_eur(total),
         back,
-        notice: None,
     })
 }
 
@@ -273,16 +272,6 @@ pub async fn pay(
         .await?,
     )?
     .into_response())
-}
-
-/// htmx fragment: live change calculation while typing.
-pub async fn change(
-    State(state): State<AppState>,
-    Extension(user): Extension<CurrentUser>,
-    Query(query): Query<GivenQuery>,
-) -> Result<Html<String>, AppError> {
-    let (_, total) = load_cart(&state, &user).await?;
-    render(change_view(total, &query.gegeben.unwrap_or_default()))
 }
 
 #[derive(Deserialize)]

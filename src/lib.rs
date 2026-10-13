@@ -129,7 +129,6 @@ pub fn router(state: AppState) -> Router {
         // Buchen
         .route("/buchen", get(sales::categories))
         .route("/buchen/abbuchen", get(sales::pay).post(sales::pay_submit))
-        .route("/buchen/rueckgeld", get(sales::change))
         .route("/buchen/fertig/{id}", get(sales::done))
         .route(
             "/buchen/warenkorb/{product_id}/{action}",

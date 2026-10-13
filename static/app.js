@@ -1,4 +1,5 @@
-// Small configuration for the bundled libraries (no application logic).
+// Small helpers around htmx: library configuration, scroll position safeguard and the direction
+// of the Lager tab animation. No business logic.
 
 // A text field the user is typing in keeps its value while a live update morphs the page around it.
 if (window.Idiomorph) {

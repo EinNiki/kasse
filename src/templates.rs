@@ -64,7 +64,6 @@ pub struct StockIndexTemplate {
 pub struct ProductFormTemplate {
     pub ctx: Option<Ctx>,
     pub title: &'static str,
-    pub tab: &'static str,
     pub action: String,
     pub heading: String,
     pub name: String,
@@ -80,7 +79,6 @@ pub struct ProductFormTemplate {
 pub struct StockFormTemplate {
     pub ctx: Option<Ctx>,
     pub title: &'static str,
-    pub tab: &'static str,
     pub action: String,
     pub product_name: String,
     pub stock: i32,
@@ -95,7 +93,6 @@ pub struct StockFormTemplate {
 pub struct ConfirmDeleteTemplate {
     pub ctx: Option<Ctx>,
     pub title: &'static str,
-    pub tab: &'static str,
     pub action: String,
     pub back: String,
     pub heading: String,
@@ -192,7 +189,6 @@ pub struct ShopTemplate {
     pub cart: Vec<CartLineView>,
     pub total: String,
     pub back: String,
-    pub notice: Option<String>,
 }
 
 #[derive(Template)]

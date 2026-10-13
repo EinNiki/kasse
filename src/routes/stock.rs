@@ -108,7 +108,6 @@ async fn product_form_page(
     Ok(ProductFormTemplate {
         ctx: page_ctx(user),
         title: "Lager",
-        tab: "produkte",
         action,
         heading: heading.to_string(),
         name: form.0.to_string(),
@@ -252,7 +251,6 @@ pub async fn delete_form(
     render(ConfirmDeleteTemplate {
         ctx: page_ctx(&user),
         title: "Lager",
-        tab: "produkte",
         action: format!("/lager/produkte/{id}/loeschen"),
         back: format!("/lager/produkte/{id}/bearbeiten"),
         heading: format!("„{}“ löschen?", p.name),
@@ -301,7 +299,6 @@ async fn stock_form_page(
     Ok(StockFormTemplate {
         ctx: page_ctx(user),
         title: "Lager",
-        tab: "produkte",
         action: format!("/lager/produkte/{id}/bestand"),
         product_name: p.name,
         stock: p.stock,
@@ -500,7 +497,6 @@ pub async fn category_delete_form(
     render(ConfirmDeleteTemplate {
         ctx: page_ctx(&user),
         title: "Lager",
-        tab: "kategorien",
         action: format!("/lager/kategorien/{id}/loeschen"),
         back: "/lager/kategorien".into(),
         heading: format!("Kategorie „{}“ löschen?", c.name),
